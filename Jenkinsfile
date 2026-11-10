@@ -75,9 +75,9 @@ pipeline {
 
         stage('Push Reports to GitHub') {
             steps {
-                // 'github-token' = Jenkins credential of kind "Secret text"
+                // 'GITHUB_TOKEN' = Jenkins credential of kind "Secret text"
                 // (Manage Jenkins -> Credentials). Exposed here as $GITHUB_TOKEN.
-                withCredentials([string(credentialsId: 'github-token',
+                withCredentials([string(credentialsId: 'GITHUB_TOKEN',
                                         variable: 'GITHUB_TOKEN')]) {
                     sh '''
                         set +x
