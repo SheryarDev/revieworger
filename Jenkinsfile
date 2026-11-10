@@ -82,7 +82,7 @@ pipeline {
                         git config user.name "Jenkins CI"
                         git config user.email "jenkins@localhost"
 
-                        REPO_URL="https://SheryarDev:${MY_TOKEN}@github.com/SheryarDev/revieworger.git"
+                        REPO_URL="https://SheryarDev:${GITHUB_TOKEN}@github.com/SheryarDev/revieworger.git"
 
                         # Commit only the reports; build/ and dist/ changes stay local.
                         git add -f reports/spotbugs.xml reports/spotbugs.html
