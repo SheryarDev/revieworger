@@ -75,14 +75,16 @@ pipeline {
 
         stage('Push Reports to GitHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'github-token',
-                                                  usernameVariable: 'GIT_USER',
-                                                  passwordVariable: 'GIT_TOKEN')]) {
+                // 'github-token' = Jenkins credential of kind "Secret text"
+                // (Manage Jenkins -> Credentials). Exposed here as $GITHUB_TOKEN.
+                withCredentials([string(credentialsId: 'github-token',
+                                        variable: 'GITHUB_TOKEN')]) {
                     sh '''
+                        set +x
                         git config user.name "Jenkins CI"
                         git config user.email "jenkins@localhost"
 
-                        REPO_URL="https://SheryarDev:${GITHUB_TOKEN}@github.com/SheryarDev/revieworger.git"
+                        REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/SheryarDev/revieworger.git"
 
                         # Commit only the reports; build/ and dist/ changes stay local.
                         git add -f reports/spotbugs.xml reports/spotbugs.html
