@@ -140,14 +140,17 @@ public class FileProcessor {
 	 */
 	protected void processLine(String line) {
 
-		if (line.equals("")) {
+		if (line.trim().equals("")) {
 			// do nothing, empty line
 		} else {
 			String[] splitResult = line.split(";");
-			String firstName = splitResult[0];
-			String lastName = splitResult[1];
-			String email = splitResult[2];
-			String group = splitResult[3];
+			String firstName = splitResult[0].trim();
+			String lastName = splitResult[1].trim();
+			String email = splitResult[2].trim();
+			// normalize the group number so " 5", "5 " and "05" are the same
+			// group, throws NumberFormatException if it is not a number
+			String group = String.valueOf(Integer.parseInt(splitResult[3]
+					.trim()));
 
 			Participant newParticipant = new Participant(firstName, lastName,
 					email, group);

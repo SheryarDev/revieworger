@@ -50,7 +50,7 @@ public class Pool {
 				.getParticipants()) {
 			// must not be the same group as the author and not too many
 			// reviews and not in review yet
-			if (!(p.getGroupNumber() == review.getAuthor().getGroupNumber())
+			if (!p.getGroupNumber().equals(review.getAuthor().getGroupNumber())
 					&& (p.getNumberOfReviews() < 2)
 					&& !ParticipantInReview(review, p)
 					&& !ParticipantInSlot(p, slot)
@@ -103,8 +103,9 @@ public class Pool {
 		for (Room r : slot.getRooms()) {
 			Review review = r.getReview();
 
+			// empty room, check the remaining rooms of the slot
 			if (review == null) {
-				return false;
+				continue;
 			}
 
 			if (review.getAuthor() != null) {
@@ -189,7 +190,7 @@ public class Pool {
 					.getInstance().getParticipants()) {
 				// must not be the same group as the author and not too many
 				// reviews and not already in review
-				if (!(participantToAdd.getGroupNumber() == review.getAuthor()
+				if (!participantToAdd.getGroupNumber().equals(review.getAuthor()
 						.getGroupNumber())
 						&& (participantToAdd.getNumberOfReviews() < 2)
 						&& !ParticipantInReview(review, participantToAdd)
@@ -199,8 +200,8 @@ public class Pool {
 					// check for the existing reviewers if in same group
 					boolean match = false;
 					for (Participant reviewer : reviewers) {
-						if (reviewer.getGroupNumber() == participantToAdd
-								.getGroupNumber()) {
+						if (reviewer.getGroupNumber().equals(participantToAdd
+								.getGroupNumber())) {
 							match = true;
 
 						}
@@ -219,7 +220,7 @@ public class Pool {
 					.getParticipants()) {
 				// must not be the same group as the author and not too many
 				// reviews
-				if (!(p.getGroupNumber() == review.getAuthor().getGroupNumber())
+				if (!p.getGroupNumber().equals(review.getAuthor().getGroupNumber())
 						&& (p.getNumberOfReviews() < 2)
 						&& !ParticipantInReview(review, p)
 						&& !ParticipantInSlot(p, slot)

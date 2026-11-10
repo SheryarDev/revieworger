@@ -128,12 +128,9 @@ public class ExecutingFrame {
 			progressBar.setMinimum(0);
 
 			Date currentDate = new Date();
-			Date finishingDate = new Date();
-
-			finishingDate.setHours(finishingDate.getHours() + hours);
-			finishingDate.setMinutes(finishingDate.getMinutes() + minutes);
-
 			Date startDate = new Date();
+			Date finishingDate = new Date(startDate.getTime()
+					+ minutesToWait * 60000L);
 
 			// wait till wished date arrived
 			while (currentDate.before(finishingDate)) {
@@ -162,8 +159,8 @@ public class ExecutingFrame {
 					e.printStackTrace();
 				}
 				currentDate = new Date();
-				int minuteDifference = currentDate.getMinutes()
-						- startDate.getMinutes();
+				int minuteDifference = (int) ((currentDate.getTime() - startDate
+						.getTime()) / 60000L);
 				progressBar.setValue(minuteDifference);
 				future.cancel(true);
 			}

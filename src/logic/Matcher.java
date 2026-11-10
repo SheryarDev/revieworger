@@ -153,8 +153,8 @@ public class Matcher implements Callable<ArrayList<Review>> {
 				previousParticipant = participants.get(i - 1);
 				// check if the own group was already added, if no make new
 				// review
-				if (currentParticipant.getGroupNumber() != previousParticipant
-						.getGroupNumber()) {
+				if (!currentParticipant.getGroupNumber().equals(previousParticipant
+						.getGroupNumber())) {
 					Review review = new Review(currentParticipant);
 					review.setAuthor(currentParticipant);
 					review.setAuthor(currentParticipant);
