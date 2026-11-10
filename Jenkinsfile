@@ -15,6 +15,15 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+                script {
+                    // Stop the build loop: the report commit pushed by this
+                    // pipeline would otherwise trigger another build.
+                    def lastMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    if (lastMsg.contains('[skip ci]')) {
+                        currentBuild.result = 'NOT_BUILT'
+                        error('Last commit is an automated report commit - skipping build.')
+                    }
+                }
             }
         }
 
@@ -61,6 +70,33 @@ pipeline {
             steps {
                 archiveArtifacts artifacts: 'reports/spotbugs.xml, reports/spotbugs.html',
                                  allowEmptyArchive: false
+            }
+        }
+
+        stage('Push Reports to GitHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-token',
+                                                  usernameVariable: 'GIT_USER',
+                                                  passwordVariable: 'GIT_TOKEN')]) {
+                    sh '''
+                        git config user.name "Jenkins CI"
+                        git config user.email "jenkins@localhost"
+
+                        REPO_URL="https://${GIT_USER}:${GIT_TOKEN}@github.com/SheryarDev/revieworger.git"
+
+                        # Commit only the reports; build/ and dist/ changes stay local.
+                        git add -f reports/spotbugs.xml reports/spotbugs.html
+
+                        if git diff --cached --quiet; then
+                            echo "Reports unchanged - nothing to push."
+                            exit 0
+                        fi
+
+                        git commit -m "Update SpotBugs reports (build #${BUILD_NUMBER}) [skip ci]"
+                        git pull --rebase --autostash "$REPO_URL" main
+                        git push "$REPO_URL" HEAD:main
+                    '''
+                }
             }
         }
     }
