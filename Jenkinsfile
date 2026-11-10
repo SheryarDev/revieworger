@@ -49,9 +49,9 @@ pipeline {
 
                     "$SPOTBUGS_HOME/bin/spotbugs" \
                       -textui \
-                      -xml:withMessages \
                       -auxclasspath "$AUX_CP" \
-                      -output reports/spotbugs.xml \
+                      -xml:withMessages=reports/spotbugs.xml \
+                      -html=reports/spotbugs.html \
                       build
                 '''
             }
@@ -59,7 +59,7 @@ pipeline {
 
         stage('Archive Results') {
             steps {
-                archiveArtifacts artifacts: 'reports/spotbugs.xml',
+                archiveArtifacts artifacts: 'reports/spotbugs.xml, reports/spotbugs.html',
                                  allowEmptyArchive: false
             }
         }
@@ -67,7 +67,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'reports/spotbugs.xml',
+            archiveArtifacts artifacts: 'reports/spotbugs.xml, reports/spotbugs.html',
                              allowEmptyArchive: true
         }
     }
