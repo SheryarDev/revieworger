@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileProcessor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">io</a> &gt; <span class="el_source">FileProcessor.java</span></div><h1>FileProcessor.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena K�fer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena K�fer - initial version
+ *******************************************************************************/
+package io;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+import javax.swing.JOptionPane;
+
+import data.Participant;
+import data.ParticipantTableModel;
+import data.Review;
+
+/**
+ * This class holds the methods to read a list of participants
+ */
+<span class="fc" id="L39">public class FileProcessor {</span>
+
+	private Path filePath;
+	private String fp;
+<span class="fc" id="L43">	private final static Charset ENCODING = StandardCharsets.UTF_8;</span>
+
+	/**
+	 * counts the read lines if an error occurs
+	 */
+<span class="fc" id="L48">	int lineCount = 1;</span>
+
+	/**
+	 * @param filePath
+	 *            the path to the selected file
+	 */
+	public void readParticipantList(String filePath) {
+<span class="fc" id="L55">		this.fp=filePath;</span>
+<span class="fc" id="L56">		this.filePath = Paths.get(filePath);</span>
+<span class="fc" id="L57">		processLineByLine();</span>
+<span class="fc" id="L58">	}</span>
+
+	/**
+	 * This method processes line by line of the given document and scan sit
+	 */
+	public final void processLineByLine() {
+<span class="fc" id="L64">		Scanner scanner = null;</span>
+		try {
+<span class="fc" id="L66">			scanner = new Scanner(new BufferedReader(new FileReader(fp))); </span>
+
+			//scanner = new Scanner(filePath, &quot;UTF-8&quot;);
+<span class="fc" id="L69">		} catch (IOException io) {</span>
+<span class="nc" id="L70">			JOptionPane.showMessageDialog(null, &quot;Fehler beim Öffnen der Datei&quot;,</span>
+					&quot;�ffnen fehlgeschlagen&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L72">		} catch (IllegalArgumentException iae) {</span>
+<span class="nc" id="L73">			JOptionPane.showMessageDialog(null, &quot;Encoding falsch&quot;,</span>
+					&quot;Einlesen fehlgeschlagen&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="pc" id="L75">		}</span>
+
+<span class="fc" id="L77">		lineCount = 1;</span>
+<span class="fc" id="L78">		Boolean errorOccured = false;</span>
+<span class="fc" id="L79">		long timeStamp = System.currentTimeMillis();</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">		while (scanner.hasNextLine()) {</span>
+<span class="fc" id="L81">			String logText = &quot;&quot;;</span>
+			try {
+				// line by line
+<span class="fc" id="L84">				processLine(scanner.nextLine());</span>
+<span class="fc" id="L85">			} catch (ArrayIndexOutOfBoundsException e) {</span>
+<span class="fc" id="L86">				logText = &quot;Zu wenig Argumente&quot;;</span>
+<span class="fc" id="L87">			} catch (NumberFormatException nfe) {</span>
+<span class="fc" id="L88">				logText = &quot;Gruppennummer keine Zahl&quot;;</span>
+<span class="nc" id="L89">			} catch (Exception e) {</span>
+<span class="nc" id="L90">				logText = &quot;Unbekannter Fehler&quot;;</span>
+			} finally {
+				// error occured
+<span class="fc bfc" id="L93" title="All 2 branches covered.">				if (!logText.equals(&quot;&quot;)) {</span>
+					// log file if error occurs
+<span class="fc" id="L95">					errorOccured = true;</span>
+<span class="fc" id="L96">					String logPath = filePath.getParent() + &quot;/log&quot; + timeStamp</span>
+							+ &quot;.txt&quot;;
+					FileWriter writer;
+					try {
+<span class="fc" id="L100">						writer = new FileWriter(new File(logPath), true);</span>
+<span class="fc" id="L101">						writer.append(&quot;\nFehler in Zeile &quot;</span>
+<span class="fc" id="L102">								+ Integer.toString(lineCount) + &quot; &quot; + logText);</span>
+
+<span class="fc" id="L104">						writer.close();</span>
+<span class="nc" id="L105">					} catch (FileNotFoundException e1) {</span>
+<span class="nc" id="L106">						JOptionPane.showMessageDialog(null,</span>
+								&quot;Konnte log-Datei nicht schreiben&quot;, &quot;Error&quot;,
+								JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L109">					} catch (IOException e1) {</span>
+<span class="nc" id="L110">						JOptionPane.showMessageDialog(null,</span>
+								&quot;Konnte log-Datei nicht schreiben&quot;, &quot;Error&quot;,
+								JOptionPane.ERROR_MESSAGE);
+<span class="pc" id="L113">					}</span>
+
+				}
+
+			}
+<span class="fc" id="L118">			lineCount++;</span>
+<span class="fc" id="L119">		}</span>
+
+<span class="fc bfc" id="L121" title="All 2 branches covered.">		if (errorOccured) {</span>
+<span class="fc" id="L122">			JOptionPane</span>
+<span class="nc" id="L123">					.showMessageDialog(</span>
+							null,
+							&quot;Es ist ein Fehler aufgetreten. Bitte verwenden Sie ein \&quot;;\&quot; als Separator. Details in &quot;
+<span class="fc" id="L126">									+ filePath.getParent().toString()</span>
+									+ &quot;/log&quot;
+									+ timeStamp + &quot;.txt&quot;, &quot;Error&quot;,
+							JOptionPane.ERROR_MESSAGE);
+		}
+
+<span class="fc" id="L132">	}</span>
+
+	/**
+	 * This method splits the current line by the split character and parses it
+	 * into a new participant
+	 * 
+	 * @param line
+	 *            the current line
+	 */
+	protected void processLine(String line) {
+
+<span class="fc bfc" id="L143" title="All 2 branches covered.">		if (line.trim().equals(&quot;&quot;)) {</span>
+			// do nothing, empty line
+		} else {
+<span class="fc" id="L146">			String[] splitResult = line.split(&quot;;&quot;);</span>
+<span class="fc" id="L147">			String firstName = splitResult[0].trim();</span>
+<span class="fc" id="L148">			String lastName = splitResult[1].trim();</span>
+<span class="fc" id="L149">			String email = splitResult[2].trim();</span>
+			// normalize the group number so &quot; 5&quot;, &quot;5 &quot; and &quot;05&quot; are the same
+			// group, throws NumberFormatException if it is not a number
+<span class="fc" id="L152">			String group = String.valueOf(Integer.parseInt(splitResult[3]</span>
+<span class="fc" id="L153">					.trim()));</span>
+
+<span class="fc" id="L155">			Participant newParticipant = new Participant(firstName, lastName,</span>
+					email, group);
+<span class="fc" id="L157">			ParticipantTableModel.getInstance().addParticipant(newParticipant);</span>
+		}
+<span class="fc" id="L159">	}</span>
+
+	public void printResult(ArrayList&lt;Review&gt; reviews, String path) {
+
+		try {
+<span class="fc" id="L164">			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(</span>
+					new FileOutputStream(path), &quot;UTF-8&quot;));
+
+<span class="fc bfc" id="L167" title="All 2 branches covered.">			for (Review r : reviews) {</span>
+<span class="fc" id="L168">				String result = &quot;Review &quot;</span>
+<span class="fc" id="L169">						+ r.getLetter()</span>
+						+ &quot;: Gruppe &quot;
+<span class="fc" id="L171">						+ r.getGroupNumber()</span>
+						+ &quot; am &quot;
+<span class="fc" id="L173">						+ r.getAssignedRoom().getSlot().getFormatedDate()</span>
+<span class="fc" id="L174">								.trim() + &quot; in Raum &quot;</span>
+<span class="fc" id="L175">						+ r.getAssignedRoom().getRoomID();</span>
+<span class="fc" id="L176">				writer.append(result);</span>
+<span class="fc" id="L177">				writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc bfc" id="L179" title="All 2 branches covered.">				if (!r.getAssignedRoom().hasBeamer()) {</span>
+<span class="fc" id="L180">					writer.append(&quot;Beamer benötigt&quot;);</span>
+<span class="fc" id="L181">					writer.append((char) Character.LINE_SEPARATOR);</span>
+				}
+
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">				if (r.getAuthor() != null) {</span>
+<span class="fc" id="L185">					Participant author = r.getAuthor();</span>
+<span class="fc" id="L186">					result = &quot;Autor: &quot;</span>
+<span class="fc" id="L187">							+ author.getFirstName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L189">							+ author.getLastName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L191">							+ author.geteMailAdress().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+<span class="fc" id="L192">							+ &quot; Gruppe &quot; + author.getGroupNumber();</span>
+<span class="fc" id="L193">					writer.append(result);</span>
+<span class="fc" id="L194">					writer.append((char) Character.LINE_SEPARATOR);</span>
+				}
+
+<span class="fc bfc" id="L197" title="All 2 branches covered.">				if (r.getModerator() != null) {</span>
+<span class="fc" id="L198">					Participant moderator = r.getModerator();</span>
+<span class="fc" id="L199">					result = &quot;Moderator: &quot;</span>
+<span class="fc" id="L200">							+ moderator.getFirstName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L202">							+ moderator.getLastName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L204">							+ moderator.geteMailAdress().replace(&quot; &quot;, &quot;&quot;)</span>
+<span class="fc" id="L205">									.trim() + &quot; Gruppe &quot;</span>
+<span class="fc" id="L206">							+ moderator.getGroupNumber();</span>
+<span class="fc" id="L207">					writer.append(result);</span>
+<span class="fc" id="L208">					writer.append((char) Character.LINE_SEPARATOR);</span>
+				}
+
+<span class="fc bfc" id="L211" title="All 2 branches covered.">				if (r.getScribe() != null) {</span>
+<span class="fc" id="L212">					Participant scribe = r.getScribe();</span>
+<span class="fc" id="L213">					result = &quot;Notar: &quot;</span>
+<span class="fc" id="L214">							+ scribe.getFirstName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L216">							+ scribe.getLastName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L218">							+ scribe.geteMailAdress().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+<span class="fc" id="L219">							+ &quot; Gruppe &quot; + scribe.getGroupNumber();</span>
+<span class="fc" id="L220">					writer.append(result);</span>
+<span class="fc" id="L221">					writer.append((char) Character.LINE_SEPARATOR);</span>
+				}
+
+<span class="fc bfc" id="L224" title="All 2 branches covered.">				for (Participant reviewer : r.getReviewers()) {</span>
+<span class="fc" id="L225">					result = &quot;Gutachter: &quot;</span>
+<span class="fc" id="L226">							+ reviewer.getFirstName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L228">							+ reviewer.getLastName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot; 
+<span class="fc" id="L230">							+  reviewer.geteMailAdress().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+<span class="fc" id="L231">							+&quot; Gruppe &quot; + reviewer.getGroupNumber();</span>
+<span class="fc" id="L232">					writer.append(result);</span>
+<span class="fc" id="L233">					writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L234">				}</span>
+
+<span class="fc" id="L236">				result = &quot;*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x&quot;;</span>
+<span class="fc" id="L237">				writer.append(result);</span>
+<span class="fc" id="L238">				writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L239">			}</span>
+
+<span class="fc" id="L241">			writer.close();</span>
+
+<span class="fc" id="L243">		} catch (FileNotFoundException e1) {</span>
+<span class="nc" id="L244">			JOptionPane.showMessageDialog(null,</span>
+					&quot;Konnte Ergebnis-Datei nicht schreiben&quot;, &quot;Error&quot;,
+					JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L247">		} catch (IOException e1) {</span>
+<span class="nc" id="L248">			JOptionPane.showMessageDialog(null,</span>
+					&quot;Konnte Ergebnis-Datei nicht schreiben&quot;, &quot;Error&quot;,
+					JOptionPane.ERROR_MESSAGE);
+<span class="pc" id="L251">		}</span>
+<span class="fc" id="L252">	}</span>
+
+	public void printResultNoMail(ArrayList&lt;Review&gt; reviews, String path) {
+<span class="fc" id="L255">		String newPath = path.replace(&quot;.txt&quot;, &quot;-no-mail.txt&quot;);</span>
+
+		try {
+<span class="fc" id="L258">			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(</span>
+					new FileOutputStream(newPath), &quot;UTF-8&quot;));
+
+<span class="fc bfc" id="L261" title="All 2 branches covered.">			for (Review r : reviews) {</span>
+<span class="fc" id="L262">				String result = &quot;Review &quot;</span>
+<span class="fc" id="L263">						+ r.getLetter()</span>
+						+ &quot;: Gruppe &quot;
+<span class="fc" id="L265">						+ r.getGroupNumber()</span>
+						+ &quot; am &quot;
+<span class="fc" id="L267">						+ r.getAssignedRoom().getSlot().getFormatedDate()</span>
+<span class="fc" id="L268">								.trim() + &quot; in Raum &quot;</span>
+<span class="fc" id="L269">						+ r.getAssignedRoom().getRoomID();</span>
+<span class="fc" id="L270">				writer.append(result);</span>
+<span class="fc" id="L271">				writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc bfc" id="L273" title="All 2 branches covered.">				if (!r.getAssignedRoom().hasBeamer()) {</span>
+<span class="fc" id="L274">					writer.append(&quot;Beamer benötigt&quot;);</span>
+<span class="fc" id="L275">					writer.append((char) Character.LINE_SEPARATOR);</span>
+				}
+
+<span class="pc bpc" id="L278" title="1 of 2 branches missed.">				if (r.getAuthor() != null) {</span>
+<span class="fc" id="L279">					Participant author = r.getAuthor();</span>
+<span class="fc" id="L280">					result = &quot;Autor: &quot;</span>
+<span class="fc" id="L281">							+ author.getFirstName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L283">							+ author.getLastName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+<span class="fc" id="L284">							+ &quot; &quot; + &quot; Gruppe &quot; + author.getGroupNumber();</span>
+<span class="fc" id="L285">					writer.append(result);</span>
+<span class="fc" id="L286">					writer.append((char) Character.LINE_SEPARATOR);</span>
+				}
+
+<span class="fc bfc" id="L289" title="All 2 branches covered.">				if (r.getModerator() != null) {</span>
+<span class="fc" id="L290">					Participant moderator = r.getModerator();</span>
+<span class="fc" id="L291">					result = &quot;Moderator: &quot;</span>
+<span class="fc" id="L292">							+ moderator.getFirstName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L294">							+ moderator.getLastName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+<span class="fc" id="L295">							+ &quot; &quot; + &quot; Gruppe &quot; + moderator.getGroupNumber();</span>
+<span class="fc" id="L296">					writer.append(result);</span>
+<span class="fc" id="L297">					writer.append((char) Character.LINE_SEPARATOR);</span>
+				}
+
+<span class="fc bfc" id="L300" title="All 2 branches covered.">				if (r.getScribe() != null) {</span>
+<span class="fc" id="L301">					Participant scribe = r.getScribe();</span>
+<span class="fc" id="L302">					result = &quot;Notar: &quot;</span>
+<span class="fc" id="L303">							+ scribe.getFirstName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L305">							+ scribe.getLastName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+<span class="fc" id="L306">							+ &quot; &quot; + &quot; Gruppe &quot; + scribe.getGroupNumber();</span>
+<span class="fc" id="L307">					writer.append(result);</span>
+<span class="fc" id="L308">					writer.append((char) Character.LINE_SEPARATOR);</span>
+				}
+
+<span class="fc bfc" id="L311" title="All 2 branches covered.">				for (Participant reviewer : r.getReviewers()) {</span>
+<span class="fc" id="L312">					result = &quot;Gutachter: &quot;</span>
+<span class="fc" id="L313">							+ reviewer.getFirstName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+							+ &quot; &quot;
+<span class="fc" id="L315">							+ reviewer.getLastName().replace(&quot; &quot;, &quot;&quot;).trim()</span>
+<span class="fc" id="L316">							+ &quot; &quot; + &quot; Gruppe &quot; + reviewer.getGroupNumber();</span>
+<span class="fc" id="L317">					writer.append(result);</span>
+<span class="fc" id="L318">					writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L319">				}</span>
+
+<span class="fc" id="L321">				result = &quot;*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x&quot;;</span>
+<span class="fc" id="L322">				writer.append(result);</span>
+<span class="fc" id="L323">				writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L324">			}</span>
+
+<span class="fc" id="L326">			writer.close();</span>
+
+<span class="fc" id="L328">		} catch (FileNotFoundException e1) {</span>
+<span class="nc" id="L329">			JOptionPane.showMessageDialog(null,</span>
+					&quot;Konnte Ergebnis-Datei nicht schreiben&quot;, &quot;Error&quot;,
+					JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L332">		} catch (IOException e1) {</span>
+<span class="nc" id="L333">			JOptionPane.showMessageDialog(null,</span>
+					&quot;Konnte Ergebnis-Datei nicht schreiben&quot;, &quot;Error&quot;,
+					JOptionPane.ERROR_MESSAGE);
+<span class="pc" id="L336">		}</span>
+<span class="fc" id="L337">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

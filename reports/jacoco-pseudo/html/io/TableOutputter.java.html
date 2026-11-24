@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TableOutputter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">io</a> &gt; <span class="el_source">TableOutputter.java</span></div><h1>TableOutputter.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package io;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import javax.swing.JOptionPane;
+
+import logic.Matcher;
+import data.Review;
+import data.Room;
+import data.Slot;
+import data.SortSlot;
+
+/**
+ * This class parses the reviews to an overview table in Latex
+ */
+<span class="nc" id="L33">public class TableOutputter {</span>
+
+	public static void createTable(String pathToFile,
+			ArrayList&lt;Review&gt; reviews, Matcher matcher) {
+		FileWriter writer;
+
+<span class="fc" id="L39">		ArrayList&lt;Slot&gt; tempSlots = matcher.getSlots();</span>
+<span class="fc" id="L40">		ArrayList&lt;SortSlot&gt; slots = new ArrayList&lt;SortSlot&gt;();</span>
+
+<span class="fc bfc" id="L42" title="All 2 branches covered.">		for (Slot s : tempSlots) {</span>
+<span class="fc" id="L43">			SortSlot newSlot = new SortSlot(s.getDate(), s.getBeginTime(),</span>
+<span class="fc" id="L44">					s.getEndTime());</span>
+<span class="fc" id="L45">			newSlot.setRooms(s.getRooms());</span>
+<span class="fc" id="L46">			slots.add(newSlot);</span>
+<span class="fc" id="L47">		}</span>
+
+<span class="fc" id="L49">		Collections.sort(slots);</span>
+
+<span class="fc" id="L51">		ArrayList&lt;String&gt; rooms = getRoomNumbers(slots);</span>
+
+		try {
+<span class="fc" id="L54">			writer = new FileWriter(new File(pathToFile), true);</span>
+
+<span class="fc" id="L56">			String result = &quot;\\documentclass[10pt,a4paper]{article}&quot;;</span>
+<span class="fc" id="L57">			writer.append(result);</span>
+<span class="fc" id="L58">			writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L59">			result = &quot;\\usepackage[utf8]{inputenc}&quot;;</span>
+<span class="fc" id="L60">			writer.append(result);</span>
+<span class="fc" id="L61">			writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L62">			result = &quot;\\usepackage[german]{babel}&quot;;</span>
+<span class="fc" id="L63">			writer.append(result);</span>
+<span class="fc" id="L64">			writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L65">			result = &quot;\\usepackage{multirow}&quot;;</span>
+<span class="fc" id="L66">			writer.append(result);</span>
+<span class="fc" id="L67">			writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L68">			result = &quot;\\usepackage[landscape]{geometry}&quot;;</span>
+<span class="fc" id="L69">			writer.append(result);</span>
+<span class="fc" id="L70">			writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L71">			result = &quot;\\usepackage{a4wide}&quot;;</span>
+<span class="fc" id="L72">			writer.append(result);</span>
+<span class="fc" id="L73">			writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L74">			result = &quot;\\begin{document}&quot;;</span>
+<span class="fc" id="L75">			writer.append(result);</span>
+<span class="fc" id="L76">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+			// table
+<span class="fc" id="L79">			result = &quot;\\begin{table}[ht]&quot;;</span>
+<span class="fc" id="L80">			writer.append(result);</span>
+<span class="fc" id="L81">			writer.append((char) Character.LINE_SEPARATOR);</span>
+<span class="fc" id="L82">			result = &quot;\\begin{center}&quot;;</span>
+<span class="fc" id="L83">			writer.append(result);</span>
+<span class="fc" id="L84">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+			// definition
+<span class="fc" id="L87">			result = &quot;\\begin{tabular}{|p{1,2cm}|p{1,5cm}|p{1,3cm}|&quot;;</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">			for (String r : rooms) {</span>
+<span class="fc" id="L89">				result = result + &quot;p{1cm}|&quot;;</span>
+<span class="fc" id="L90">			}</span>
+<span class="fc" id="L91">			result = result + &quot;}&quot;;</span>
+<span class="fc" id="L92">			writer.append(result);</span>
+<span class="fc" id="L93">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L95">			result = &quot;\\hline&quot;;</span>
+<span class="fc" id="L96">			writer.append(result);</span>
+<span class="fc" id="L97">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L99">			result = &quot; \\multicolumn{3}{|c|}{\\multirow{2}{*}{\\textbf{Planung}}}&amp; \\multicolumn{&quot;</span>
+<span class="fc" id="L100">					+ Integer.toString(rooms.size())</span>
+					+ &quot;}{|c|}{\\textbf{Raum}}\\\\&quot;;
+<span class="fc" id="L102">			writer.append(result);</span>
+<span class="fc" id="L103">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L105">			result = &quot;\\cline{4-&quot; + Integer.toString(rooms.size() + 3) + &quot;}&quot;;</span>
+<span class="fc" id="L106">			writer.append(result);</span>
+<span class="fc" id="L107">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L109">			result = &quot;\\multicolumn{3}{|c|}{} &quot;;</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">			for (String s : rooms) {</span>
+<span class="fc" id="L111">				result = result + &quot;&amp; \\textbf{&quot; + s + &quot;}&quot;;</span>
+<span class="fc" id="L112">			}</span>
+<span class="fc" id="L113">			result = result + &quot;\\\\&quot;;</span>
+<span class="fc" id="L114">			writer.append(result);</span>
+<span class="fc" id="L115">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L117">			result = &quot;\\hline&quot;;</span>
+<span class="fc" id="L118">			writer.append(result);</span>
+<span class="fc" id="L119">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+			// slot by slot
+<span class="fc" id="L122">			DateFormat dateFormatter = new SimpleDateFormat(&quot;dd.MM.yy&quot;);</span>
+<span class="fc" id="L123">			DateFormat timeFormatter = new SimpleDateFormat(&quot;HH:mm&quot;);</span>
+
+<span class="fc" id="L125">			String[][] array = createArray(rooms, slots);</span>
+<span class="fc" id="L126">			int slotCounter = 0;</span>
+
+<span class="fc bfc" id="L128" title="All 2 branches covered.">			for (Slot s : slots) {</span>
+				
+<span class="fc" id="L130">				String dateString = dateFormatter.format(s.getDate());</span>
+<span class="fc" id="L131">				result = dateString;</span>
+<span class="fc" id="L132">				String begin = timeFormatter.format(s.getBeginTime());</span>
+<span class="fc" id="L133">				result = result + &quot; &amp; &quot; + begin + &quot; - &quot;;</span>
+<span class="fc" id="L134">				String end = timeFormatter.format(s.getEndTime());</span>
+<span class="fc" id="L135">				result = result + end + &quot; Uhr &amp; Review: &quot;;</span>
+
+				// review letters
+				// row length of the current slot (array[1] crashed with one slot)
+<span class="fc bfc" id="L139" title="All 2 branches covered.">				for (int i = 0; i &lt; array[slotCounter].length ; i++) {</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">					if (array[slotCounter][i] == null) {</span>
+<span class="nc" id="L141">						result = result + &quot;&amp; - &quot;;</span>
+					} else {
+<span class="fc" id="L143">						result = result + &quot; &amp; &quot; + array[slotCounter][i];</span>
+					}
+				}
+
+<span class="fc" id="L147">				result = result + &quot;\\\\&quot;;</span>
+
+<span class="fc" id="L149">				writer.append(result);</span>
+<span class="fc" id="L150">				writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L152">				result = &quot;\\hline&quot;;</span>
+<span class="fc" id="L153">				writer.append(result);</span>
+<span class="fc" id="L154">				writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L156">				slotCounter++;</span>
+<span class="fc" id="L157">			}</span>
+
+			// end
+<span class="fc" id="L160">			result = &quot;\\end{tabular}&quot;;</span>
+<span class="fc" id="L161">			writer.append(result);</span>
+<span class="fc" id="L162">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L164">			result = &quot;\\end{center}&quot;;</span>
+<span class="fc" id="L165">			writer.append(result);</span>
+<span class="fc" id="L166">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L168">			result = &quot;\\end{table}&quot;;</span>
+<span class="fc" id="L169">			writer.append(result);</span>
+<span class="fc" id="L170">			writer.append((char) Character.LINE_SEPARATOR);</span>
+
+<span class="fc" id="L172">			result = &quot;\\end{document}&quot;;</span>
+<span class="fc" id="L173">			writer.append(result);</span>
+
+<span class="fc" id="L175">			writer.close();</span>
+
+<span class="nc" id="L177">		} catch (FileNotFoundException e1) {</span>
+<span class="nc" id="L178">			JOptionPane.showMessageDialog(null,</span>
+					&quot;Konnte Ergebnis-Tabelle nicht schreiben&quot;, &quot;Error&quot;,
+					JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L181">		} catch (IOException e1) {</span>
+<span class="nc" id="L182">			JOptionPane.showMessageDialog(null,</span>
+					&quot;Konnte Ergebnis-Tabelle nicht schreiben&quot;, &quot;Error&quot;,
+					JOptionPane.ERROR_MESSAGE);
+<span class="pc" id="L185">		}</span>
+<span class="fc" id="L186">	}</span>
+
+	/**
+	 * @param slots
+	 *            the sorted slot list
+	 * @return a list of all room numbers
+	 */
+	private static ArrayList&lt;String&gt; getRoomNumbers(ArrayList&lt;SortSlot&gt; slots) {
+<span class="fc" id="L194">		ArrayList&lt;String&gt; roomNumbers = new ArrayList&lt;String&gt;();</span>
+
+<span class="fc bfc" id="L196" title="All 2 branches covered.">		for (Slot s : slots) {</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">			for (Room r : s.getRooms()) {</span>
+				String id;
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">				if (!r.hasBeamer()) {</span>
+<span class="fc" id="L200">					id = r.getRoomID() + &quot;*&quot;;</span>
+				} else {
+<span class="nc" id="L202">					id = r.getRoomID();</span>
+				}
+
+<span class="pc bpc" id="L205" title="1 of 2 branches missed.">				if (!roomNumbers.contains(id)) {</span>
+<span class="fc" id="L206">					roomNumbers.add(id);</span>
+				}
+<span class="fc" id="L208">			}</span>
+<span class="fc" id="L209">		}</span>
+
+<span class="fc" id="L211">		return roomNumbers;</span>
+	}
+
+	/**
+	 * @param rooms
+	 *            the list of room IDs
+	 * @param slots
+	 *            the sorted slot list
+	 * @return an array which has the match between the slot and the rooms
+	 */
+	public static String[][] createArray(ArrayList&lt;String&gt; rooms,
+			ArrayList&lt;SortSlot&gt; slots) {
+<span class="fc" id="L223">		String[][] array = new String[slots.size()][rooms.size()];</span>
+<span class="fc" id="L224">		int slotCounter = 0;</span>
+
+<span class="fc bfc" id="L226" title="All 2 branches covered.">		for (Slot slot : slots) {</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">			for (Room roomInSlot : slot.getRooms()) {</span>
+				String roomToSearch;
+
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">				if (roomInSlot.hasBeamer()) {</span>
+<span class="nc" id="L231">					roomToSearch = roomInSlot.getRoomID();</span>
+				} else {
+<span class="fc" id="L233">					roomToSearch = roomInSlot.getRoomID() + &quot;*&quot;;</span>
+				}
+<span class="fc" id="L235">				int index = rooms.indexOf(roomToSearch);</span>
+
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">				if (roomInSlot.getReview() == null) {</span>
+<span class="nc" id="L238">					array[slotCounter][index] = &quot;-&quot;;</span>
+				} else {
+<span class="fc" id="L240">					array[slotCounter][index] = roomInSlot.getReview()</span>
+<span class="fc" id="L241">							.getLetter();</span>
+
+				}
+<span class="fc" id="L244">			}</span>
+<span class="fc" id="L245">			slotCounter++;</span>
+<span class="fc" id="L246">		}</span>
+
+<span class="fc" id="L248">		return array;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

@@ -1,0 +1,725 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Gui.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">gui</a> &gt; <span class="el_source">Gui.java</span></div><h1>Gui.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena K�fer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena K�fer - initial version
+ *******************************************************************************/
+package gui;
+
+import gui.actions.AddParticipantAction;
+import gui.actions.DeleteParticipantAction;
+import gui.actions.EditParticipantAction;
+import gui.actions.EditRoomAction;
+import gui.actions.EditSlotAction;
+import gui.actions.ReadParticipantsAction;
+import gui.actions.deleteInTreeAction;
+import io.EmailDelivery;
+import io.LoadSave;
+
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.ListSelectionModel;
+
+import logic.Matcher;
+import main.Main;
+import data.ParticipantTableModel;
+import data.RoomTreeModel;
+
+/**
+ * This class holds the GUI
+ */
+public class Gui extends JFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static JTable participantTable;
+	private static JTree roomTree;
+	private JTextField amountRoundsTextField;
+	private final JComboBox&lt;String&gt; exitOptionComboBox;
+	private JTextField hourTextField;
+	private JTextField minuteTextField;
+	private JCheckBox scribeIsAuthorCheckbox;
+	private JCheckBox moderatorNotReviewerGroupCheckbox;
+
+<span class="nc" id="L73">	private static Gui instance = null;</span>
+
+	public static Gui getInstance() {
+<span class="nc bnc" id="L76" title="All 2 branches missed.">		if (instance == null) {</span>
+<span class="nc" id="L77">			instance = new Gui();</span>
+		}
+<span class="nc" id="L79">		return instance;</span>
+	}
+
+	/**
+	 * Creates the main frame. There are five main components. The menu bar. The
+	 * participant panel which shows the list of current participants and
+	 * methods to edit it. The room panel which shows the current rooms. The
+	 * option panel with available options. The start button.
+	 */
+<span class="nc" id="L88">	private Gui() {</span>
+
+<span class="nc" id="L90">		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);</span>
+<span class="nc" id="L91">		setBounds(100, 100, 1000, 414);</span>
+
+<span class="nc" id="L93">		this.addWindowListener(new WindowAdapter() {</span>
+			public void windowClosing(WindowEvent evt) {
+<span class="nc bnc" id="L95" title="All 2 branches missed.">				if (!Main.isSaved()) {</span>
+<span class="nc" id="L96">					int showConfirmDialog = JOptionPane.showConfirmDialog(null,</span>
+							&quot;Möchten Sie speichern?&quot;);
+<span class="nc bnc" id="L98" title="All 2 branches missed.">					if (showConfirmDialog == JOptionPane.YES_OPTION) {</span>
+<span class="nc" id="L99">						LoadSave.save();</span>
+					}
+				}
+<span class="nc" id="L102">			}</span>
+		});
+
+		// Menu
+<span class="nc" id="L106">		JMenuBar menuBar = new JMenuBar();</span>
+<span class="nc" id="L107">		setJMenuBar(menuBar);</span>
+
+<span class="nc" id="L109">		JMenu menuFile = new JMenu(&quot;Datei&quot;);</span>
+<span class="nc" id="L110">		menuBar.add(menuFile);</span>
+
+<span class="nc" id="L112">		JMenuItem menuSave = new JMenuItem(&quot;Speichern&quot;);</span>
+<span class="nc" id="L113">		menuFile.add(menuSave);</span>
+
+<span class="nc" id="L115">		menuSave.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L124">				LoadSave.save();</span>
+<span class="nc" id="L125">			}</span>
+
+		});
+
+<span class="nc" id="L129">		JMenuItem menuLoad = new JMenuItem(&quot;Laden&quot;);</span>
+<span class="nc" id="L130">		menuFile.add(menuLoad);</span>
+
+<span class="nc" id="L132">		menuLoad.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L141">				LoadSave.load();</span>
+<span class="nc" id="L142">			}</span>
+
+		});
+
+<span class="nc" id="L146">		JMenuItem menuLoadParticipant = new JMenuItem(</span>
+				new ReadParticipantsAction());
+<span class="nc" id="L148">		menuLoadParticipant.setText(&quot;Teilnehmer einlesen&quot;);</span>
+<span class="nc" id="L149">		menuFile.add(menuLoadParticipant);</span>
+
+<span class="nc" id="L151">		JMenuItem menuEmail = new JMenuItem(&quot;E-Mail versenden&quot;);</span>
+<span class="nc" id="L152">		menuFile.add(menuEmail);</span>
+
+<span class="nc" id="L154">		menuEmail.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">				if (EmailDelivery.sendLoadedReviews()) {</span>
+<span class="nc" id="L165">					dispose();</span>
+				}
+<span class="nc" id="L167">			}</span>
+
+		});
+
+		// participant panel
+<span class="nc" id="L172">		GridBagLayout gridBagLayout = new GridBagLayout();</span>
+<span class="nc" id="L173">		gridBagLayout.columnWidths = new int[] { 276, 296, 314 };</span>
+<span class="nc" id="L174">		gridBagLayout.rowHeights = new int[] { 43, 56, 0, 0 };</span>
+<span class="nc" id="L175">		gridBagLayout.columnWeights = new double[] { 0.0, 0.0, 0.0 };</span>
+<span class="nc" id="L176">		gridBagLayout.rowWeights = new double[] { 1.0, 0.0, 0.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L178">		getContentPane().setLayout(gridBagLayout);</span>
+
+<span class="nc" id="L180">		JPanel participantPanel = new JPanel();</span>
+<span class="nc" id="L181">		GridBagConstraints gbc_participantPanel = new GridBagConstraints();</span>
+<span class="nc" id="L182">		gbc_participantPanel.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L183">		gbc_participantPanel.gridx = 0;</span>
+<span class="nc" id="L184">		gbc_participantPanel.gridy = 0;</span>
+<span class="nc" id="L185">		getContentPane().add(participantPanel, gbc_participantPanel);</span>
+<span class="nc" id="L186">		GridBagLayout gbl_participantPanel = new GridBagLayout();</span>
+<span class="nc" id="L187">		gbl_participantPanel.columnWidths = new int[] { 193, 0 };</span>
+<span class="nc" id="L188">		gbl_participantPanel.rowHeights = new int[] { 211, 65, 0 };</span>
+<span class="nc" id="L189">		gbl_participantPanel.columnWeights = new double[] { 1.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L191">		gbl_participantPanel.rowWeights = new double[] { 1.0, 0.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L193">		participantPanel.setLayout(gbl_participantPanel);</span>
+
+<span class="nc" id="L195">		JScrollPane participantScrollPane = new JScrollPane();</span>
+<span class="nc" id="L196">		GridBagConstraints gbc_participantScrollPane = new GridBagConstraints();</span>
+<span class="nc" id="L197">		gbc_participantScrollPane.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L198">		gbc_participantScrollPane.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L199">		gbc_participantScrollPane.gridx = 0;</span>
+<span class="nc" id="L200">		gbc_participantScrollPane.gridy = 0;</span>
+<span class="nc" id="L201">		participantPanel.add(participantScrollPane, gbc_participantScrollPane);</span>
+
+<span class="nc" id="L203">		participantTable = new JTable(ParticipantTableModel.getInstance());</span>
+<span class="nc" id="L204">		participantTable</span>
+<span class="nc" id="L205">				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);</span>
+<span class="nc" id="L206">		participantScrollPane.setViewportView(participantTable);</span>
+
+<span class="nc" id="L208">		JPanel participantButtonPanle = new JPanel();</span>
+<span class="nc" id="L209">		GridBagConstraints gbc_participantButtonPanle = new GridBagConstraints();</span>
+<span class="nc" id="L210">		gbc_participantButtonPanle.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L211">		gbc_participantButtonPanle.gridx = 0;</span>
+<span class="nc" id="L212">		gbc_participantButtonPanle.gridy = 1;</span>
+<span class="nc" id="L213">		participantPanel</span>
+<span class="nc" id="L214">				.add(participantButtonPanle, gbc_participantButtonPanle);</span>
+<span class="nc" id="L215">		GridBagLayout gbl_participantButtonPanle = new GridBagLayout();</span>
+<span class="nc" id="L216">		gbl_participantButtonPanle.columnWidths = new int[] { 115, 136, 0 };</span>
+<span class="nc" id="L217">		gbl_participantButtonPanle.rowHeights = new int[] { 25, 25, 0, 0 };</span>
+<span class="nc" id="L218">		gbl_participantButtonPanle.columnWeights = new double[] { 0.0, 0.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L220">		gbl_participantButtonPanle.rowWeights = new double[] { 0.0, 0.0, 0.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L222">		participantButtonPanle.setLayout(gbl_participantButtonPanle);</span>
+
+<span class="nc" id="L224">		JButton participantAddButton = new JButton(new AddParticipantAction(this));</span>
+<span class="nc" id="L225">		GridBagConstraints gbc_participantAddButton = new GridBagConstraints();</span>
+<span class="nc" id="L226">		gbc_participantAddButton.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L227">		gbc_participantAddButton.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L228">		gbc_participantAddButton.gridx = 0;</span>
+<span class="nc" id="L229">		gbc_participantAddButton.gridy = 0;</span>
+<span class="nc" id="L230">		participantButtonPanle.add(participantAddButton,</span>
+				gbc_participantAddButton);
+
+<span class="nc" id="L233">		participantAddButton.setText(&quot;Hinzufügen&quot;);</span>
+
+<span class="nc" id="L235">		JButton participantEditButton = new JButton(new EditParticipantAction(this));</span>
+<span class="nc" id="L236">		GridBagConstraints gbc_participantEditButton = new GridBagConstraints();</span>
+<span class="nc" id="L237">		gbc_participantEditButton.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L238">		gbc_participantEditButton.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L239">		gbc_participantEditButton.gridx = 1;</span>
+<span class="nc" id="L240">		gbc_participantEditButton.gridy = 0;</span>
+<span class="nc" id="L241">		participantButtonPanle.add(participantEditButton,</span>
+				gbc_participantEditButton);
+
+<span class="nc" id="L244">		participantEditButton.setText(&quot;Bearbeiten&quot;);</span>
+
+<span class="nc" id="L246">		JButton participantDeleteButton = new JButton(</span>
+				new DeleteParticipantAction());
+<span class="nc" id="L248">		GridBagConstraints gbc_participantDeleteButton = new GridBagConstraints();</span>
+<span class="nc" id="L249">		gbc_participantDeleteButton.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L250">		gbc_participantDeleteButton.anchor = GridBagConstraints.NORTH;</span>
+<span class="nc" id="L251">		gbc_participantDeleteButton.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L252">		gbc_participantDeleteButton.gridx = 0;</span>
+<span class="nc" id="L253">		gbc_participantDeleteButton.gridy = 1;</span>
+<span class="nc" id="L254">		participantButtonPanle.add(participantDeleteButton,</span>
+				gbc_participantDeleteButton);
+
+<span class="nc" id="L257">		participantDeleteButton.setText(&quot;Löschen&quot;);</span>
+
+<span class="nc" id="L259">		JButton clearButton = new JButton(&quot;Alle Löschen&quot;);</span>
+<span class="nc" id="L260">		GridBagConstraints gbc_clearButton = new GridBagConstraints();</span>
+<span class="nc" id="L261">		gbc_clearButton.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L262">		gbc_clearButton.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L263">		gbc_clearButton.gridx = 1;</span>
+<span class="nc" id="L264">		gbc_clearButton.gridy = 1;</span>
+<span class="nc" id="L265">		participantButtonPanle.add(clearButton, gbc_clearButton);</span>
+
+<span class="nc" id="L267">		clearButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L276">				ParticipantTableModel.getInstance().clear();</span>
+<span class="nc" id="L277">			}</span>
+
+		});
+
+		// room panel
+<span class="nc" id="L282">		JPanel roomPanel = new JPanel();</span>
+<span class="nc" id="L283">		GridBagConstraints gbc_roomPanel = new GridBagConstraints();</span>
+<span class="nc" id="L284">		gbc_roomPanel.fill = GridBagConstraints.VERTICAL;</span>
+<span class="nc" id="L285">		gbc_roomPanel.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L286">		gbc_roomPanel.gridx = 1;</span>
+<span class="nc" id="L287">		gbc_roomPanel.gridy = 0;</span>
+<span class="nc" id="L288">		getContentPane().add(roomPanel, gbc_roomPanel);</span>
+<span class="nc" id="L289">		GridBagLayout gbl_roomPanel = new GridBagLayout();</span>
+<span class="nc" id="L290">		gbl_roomPanel.columnWidths = new int[] { 317, 0 };</span>
+<span class="nc" id="L291">		gbl_roomPanel.rowHeights = new int[] { 0, 0 };</span>
+<span class="nc" id="L292">		gbl_roomPanel.columnWeights = new double[] { 1.0, Double.MIN_VALUE };</span>
+<span class="nc" id="L293">		gbl_roomPanel.rowWeights = new double[] { 1.0, Double.MIN_VALUE };</span>
+<span class="nc" id="L294">		roomPanel.setLayout(gbl_roomPanel);</span>
+
+<span class="nc" id="L296">		JPanel panel = new JPanel();</span>
+<span class="nc" id="L297">		GridBagConstraints gbc_panel = new GridBagConstraints();</span>
+<span class="nc" id="L298">		gbc_panel.gridx = 0;</span>
+<span class="nc" id="L299">		gbc_panel.gridy = 0;</span>
+<span class="nc" id="L300">		roomPanel.add(panel, gbc_panel);</span>
+<span class="nc" id="L301">		GridBagLayout gbl_panel = new GridBagLayout();</span>
+<span class="nc" id="L302">		gbl_panel.columnWidths = new int[] { 193, 0 };</span>
+<span class="nc" id="L303">		gbl_panel.rowHeights = new int[] { 211, 65, 0, 0, 0 };</span>
+<span class="nc" id="L304">		gbl_panel.columnWeights = new double[] { 1.0, Double.MIN_VALUE };</span>
+<span class="nc" id="L305">		gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L307">		panel.setLayout(gbl_panel);</span>
+
+<span class="nc" id="L309">		JScrollPane roomScrollPane = new JScrollPane();</span>
+<span class="nc" id="L310">		GridBagConstraints gbc_roomScrollPane = new GridBagConstraints();</span>
+<span class="nc" id="L311">		gbc_roomScrollPane.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L312">		gbc_roomScrollPane.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L313">		gbc_roomScrollPane.gridx = 0;</span>
+<span class="nc" id="L314">		gbc_roomScrollPane.gridy = 0;</span>
+<span class="nc" id="L315">		panel.add(roomScrollPane, gbc_roomScrollPane);</span>
+
+<span class="nc" id="L317">		roomTree = new JTree(RoomTreeModel.getInstance());</span>
+<span class="nc" id="L318">		roomScrollPane.setViewportView(roomTree);</span>
+
+<span class="nc" id="L320">		JPanel roomButtonPanel = new JPanel();</span>
+<span class="nc" id="L321">		GridBagConstraints gbc_roomButtonPanel = new GridBagConstraints();</span>
+<span class="nc" id="L322">		gbc_roomButtonPanel.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L323">		gbc_roomButtonPanel.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L324">		gbc_roomButtonPanel.gridx = 0;</span>
+<span class="nc" id="L325">		gbc_roomButtonPanel.gridy = 1;</span>
+<span class="nc" id="L326">		panel.add(roomButtonPanel, gbc_roomButtonPanel);</span>
+<span class="nc" id="L327">		GridBagLayout gbl_roomButtonPanel = new GridBagLayout();</span>
+<span class="nc" id="L328">		gbl_roomButtonPanel.columnWidths = new int[] { 115, 136, 0 };</span>
+<span class="nc" id="L329">		gbl_roomButtonPanel.rowHeights = new int[] { 25, 25, 0, 0 };</span>
+<span class="nc" id="L330">		gbl_roomButtonPanel.columnWeights = new double[] { 0.0, 0.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L332">		gbl_roomButtonPanel.rowWeights = new double[] { 0.0, 0.0, 0.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L334">		roomButtonPanel.setLayout(gbl_roomButtonPanel);</span>
+
+<span class="nc" id="L336">		JButton newSlotButton = new JButton(&quot;Neuer Slot&quot;);</span>
+<span class="nc" id="L337">		newSlotButton.addActionListener(new ActionListener() {</span>
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L339">				NewSlotGui.addSlot(instance);</span>
+<span class="nc" id="L340">			}</span>
+		});
+
+<span class="nc" id="L343">		GridBagConstraints gbc_newSlotButton = new GridBagConstraints();</span>
+<span class="nc" id="L344">		gbc_newSlotButton.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L345">		gbc_newSlotButton.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L346">		gbc_newSlotButton.gridx = 0;</span>
+<span class="nc" id="L347">		gbc_newSlotButton.gridy = 0;</span>
+<span class="nc" id="L348">		roomButtonPanel.add(newSlotButton, gbc_newSlotButton);</span>
+
+<span class="nc" id="L350">		JButton newRoomButton = new JButton(&quot;Neuer Raum&quot;);</span>
+<span class="nc" id="L351">		newRoomButton.addActionListener(new ActionListener() {</span>
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L353">				NewRoomGui.addRoom(instance);</span>
+<span class="nc" id="L354">			}</span>
+		});
+<span class="nc" id="L356">		GridBagConstraints gbc_newRoomButton = new GridBagConstraints();</span>
+<span class="nc" id="L357">		gbc_newRoomButton.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L358">		gbc_newRoomButton.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L359">		gbc_newRoomButton.gridx = 1;</span>
+<span class="nc" id="L360">		gbc_newRoomButton.gridy = 0;</span>
+<span class="nc" id="L361">		roomButtonPanel.add(newRoomButton, gbc_newRoomButton);</span>
+
+<span class="nc" id="L363">		JButton slotEditButton = new JButton(new EditSlotAction(this));</span>
+<span class="nc" id="L364">		slotEditButton.addActionListener(new ActionListener() {</span>
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L366">			}</span>
+		});
+<span class="nc" id="L368">		slotEditButton.setText(&quot;Slot bearbeiten&quot;);</span>
+<span class="nc" id="L369">		GridBagConstraints gbc_slotEditButton = new GridBagConstraints();</span>
+<span class="nc" id="L370">		gbc_slotEditButton.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L371">		gbc_slotEditButton.gridx = 0;</span>
+<span class="nc" id="L372">		gbc_slotEditButton.gridy = 1;</span>
+<span class="nc" id="L373">		roomButtonPanel.add(slotEditButton, gbc_slotEditButton);</span>
+
+<span class="nc" id="L375">		JButton roomEditButton = new JButton(new EditRoomAction(this));</span>
+<span class="nc" id="L376">		roomEditButton.setText(&quot;Raum Bearbeiten&quot;);</span>
+<span class="nc" id="L377">		GridBagConstraints gbc_roomEditButton = new GridBagConstraints();</span>
+<span class="nc" id="L378">		gbc_roomEditButton.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L379">		gbc_roomEditButton.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L380">		gbc_roomEditButton.gridx = 1;</span>
+<span class="nc" id="L381">		gbc_roomEditButton.gridy = 1;</span>
+<span class="nc" id="L382">		roomButtonPanel.add(roomEditButton, gbc_roomEditButton);</span>
+
+<span class="nc" id="L384">		JButton deleteButton = new JButton(new deleteInTreeAction());</span>
+<span class="nc" id="L385">		deleteButton.setText(&quot;Löschen&quot;);</span>
+<span class="nc" id="L386">		GridBagConstraints gbc_deleteButton = new GridBagConstraints();</span>
+<span class="nc" id="L387">		gbc_deleteButton.insets = new Insets(0, 0, 0, 5);</span>
+<span class="nc" id="L388">		gbc_deleteButton.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L389">		gbc_deleteButton.gridx = 0;</span>
+<span class="nc" id="L390">		gbc_deleteButton.gridy = 2;</span>
+<span class="nc" id="L391">		roomButtonPanel.add(deleteButton, gbc_deleteButton);</span>
+
+<span class="nc" id="L393">		JButton treeDeleteButton = new JButton(&quot;Baum löschen&quot;);</span>
+<span class="nc" id="L394">		GridBagConstraints gbc_treeDeleteButton = new GridBagConstraints();</span>
+<span class="nc" id="L395">		gbc_treeDeleteButton.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L396">		gbc_treeDeleteButton.gridx = 1;</span>
+<span class="nc" id="L397">		gbc_treeDeleteButton.gridy = 2;</span>
+<span class="nc" id="L398">		roomButtonPanel.add(treeDeleteButton, gbc_treeDeleteButton);</span>
+
+<span class="nc" id="L400">		treeDeleteButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L409">				RoomTreeModel.getInstance().clear();</span>
+<span class="nc" id="L410">			}</span>
+
+		});
+
+		// option panel
+<span class="nc" id="L415">		JPanel optionPanel = new JPanel();</span>
+<span class="nc" id="L416">		GridBagConstraints gbc_optionPanel = new GridBagConstraints();</span>
+<span class="nc" id="L417">		gbc_optionPanel.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L418">		gbc_optionPanel.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L419">		gbc_optionPanel.gridx = 2;</span>
+<span class="nc" id="L420">		gbc_optionPanel.gridy = 0;</span>
+<span class="nc" id="L421">		getContentPane().add(optionPanel, gbc_optionPanel);</span>
+<span class="nc" id="L422">		GridBagLayout gbl_optionPanel = new GridBagLayout();</span>
+<span class="nc" id="L423">		gbl_optionPanel.columnWidths = new int[] { 123, 39, -18, 0 };</span>
+<span class="nc" id="L424">		gbl_optionPanel.rowHeights = new int[] { 43, 0, 0, 0, 0, 0, 0, 32, 0, 0 };</span>
+<span class="nc" id="L425">		gbl_optionPanel.columnWeights = new double[] { 1.0, 1.0, 1.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L427">		gbl_optionPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0,</span>
+				0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE };
+<span class="nc" id="L429">		optionPanel.setLayout(gbl_optionPanel);</span>
+
+<span class="nc" id="L431">		scribeIsAuthorCheckbox = new JCheckBox(&quot;Notar ist Author&quot;);</span>
+<span class="nc" id="L432">		GridBagConstraints gbc_scribeIsAuthorCheckbox = new GridBagConstraints();</span>
+<span class="nc" id="L433">		gbc_scribeIsAuthorCheckbox.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L434">		gbc_scribeIsAuthorCheckbox.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L435">		gbc_scribeIsAuthorCheckbox.gridwidth = 2;</span>
+<span class="nc" id="L436">		gbc_scribeIsAuthorCheckbox.gridx = 0;</span>
+<span class="nc" id="L437">		gbc_scribeIsAuthorCheckbox.gridy = 2;</span>
+<span class="nc" id="L438">		optionPanel.add(scribeIsAuthorCheckbox, gbc_scribeIsAuthorCheckbox);</span>
+
+<span class="nc" id="L440">		moderatorNotReviewerGroupCheckbox = new JCheckBox(</span>
+				&quot;Moderator nicht aus Gutachter-Gruppe&quot;);
+<span class="nc" id="L442">		GridBagConstraints gbc_moderatorNotReviewerGroupCheckbox = new GridBagConstraints();</span>
+<span class="nc" id="L443">		gbc_moderatorNotReviewerGroupCheckbox.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L444">		gbc_moderatorNotReviewerGroupCheckbox.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L445">		gbc_moderatorNotReviewerGroupCheckbox.gridwidth = 2;</span>
+<span class="nc" id="L446">		gbc_moderatorNotReviewerGroupCheckbox.gridx = 0;</span>
+<span class="nc" id="L447">		gbc_moderatorNotReviewerGroupCheckbox.gridy = 3;</span>
+<span class="nc" id="L448">		optionPanel.add(moderatorNotReviewerGroupCheckbox,</span>
+				gbc_moderatorNotReviewerGroupCheckbox);
+
+<span class="nc" id="L451">		JLabel exitOptionLabel = new JLabel(&quot;  Abbruchbedingung:&quot;);</span>
+<span class="nc" id="L452">		GridBagConstraints gbc_exitOptionLabel = new GridBagConstraints();</span>
+<span class="nc" id="L453">		gbc_exitOptionLabel.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L454">		gbc_exitOptionLabel.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L455">		gbc_exitOptionLabel.gridx = 0;</span>
+<span class="nc" id="L456">		gbc_exitOptionLabel.gridy = 4;</span>
+<span class="nc" id="L457">		optionPanel.add(exitOptionLabel, gbc_exitOptionLabel);</span>
+
+<span class="nc" id="L459">		final JLabel amountRoundsLabel = new JLabel(&quot;  Anzahl Ausführungen:&quot;);</span>
+<span class="nc" id="L460">		GridBagConstraints gbc_amountRoundsLabel = new GridBagConstraints();</span>
+<span class="nc" id="L461">		gbc_amountRoundsLabel.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L462">		gbc_amountRoundsLabel.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L463">		gbc_amountRoundsLabel.gridx = 0;</span>
+<span class="nc" id="L464">		gbc_amountRoundsLabel.gridy = 6;</span>
+
+<span class="nc" id="L466">		amountRoundsTextField = new JTextField();</span>
+<span class="nc" id="L467">		GridBagConstraints gbc_amountRoundsTextField = new GridBagConstraints();</span>
+<span class="nc" id="L468">		gbc_amountRoundsTextField.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L469">		gbc_amountRoundsTextField.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L470">		gbc_amountRoundsTextField.gridx = 1;</span>
+<span class="nc" id="L471">		gbc_amountRoundsTextField.gridy = 6;</span>
+
+<span class="nc" id="L473">		amountRoundsTextField.setColumns(10);</span>
+
+<span class="nc" id="L475">		final JLabel fixedTimeLabel = new JLabel(&quot;  Abbruchzeit:&quot;);</span>
+<span class="nc" id="L476">		GridBagConstraints gbc_fixedTimeLabel = new GridBagConstraints();</span>
+<span class="nc" id="L477">		gbc_fixedTimeLabel.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L478">		gbc_fixedTimeLabel.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L479">		gbc_fixedTimeLabel.gridx = 0;</span>
+<span class="nc" id="L480">		gbc_fixedTimeLabel.gridy = 7;</span>
+
+<span class="nc" id="L482">		exitOptionComboBox = new JComboBox&lt;String&gt;();</span>
+<span class="nc" id="L483">		exitOptionComboBox.setModel(new DefaultComboBoxModel&lt;String&gt;(</span>
+				new String[] { &quot;feste Anzahl&quot;, &quot;manueller Abbruch&quot;,
+						&quot;feste Zeit&quot; }));
+<span class="nc" id="L486">		GridBagConstraints gbc_exitOptionComboBox = new GridBagConstraints();</span>
+<span class="nc" id="L487">		gbc_exitOptionComboBox.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L488">		gbc_exitOptionComboBox.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L489">		gbc_exitOptionComboBox.gridwidth = 2;</span>
+<span class="nc" id="L490">		gbc_exitOptionComboBox.gridx = 0;</span>
+<span class="nc" id="L491">		gbc_exitOptionComboBox.gridy = 5;</span>
+<span class="nc" id="L492">		optionPanel.add(exitOptionComboBox, gbc_exitOptionComboBox);</span>
+
+<span class="nc" id="L494">		JPanel panel_1 = new JPanel();</span>
+<span class="nc" id="L495">		GridBagConstraints gbc_panel_1 = new GridBagConstraints();</span>
+<span class="nc" id="L496">		gbc_panel_1.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L497">		gbc_panel_1.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L498">		gbc_panel_1.gridx = 1;</span>
+<span class="nc" id="L499">		gbc_panel_1.gridy = 7;</span>
+<span class="nc" id="L500">		optionPanel.add(panel_1, gbc_panel_1);</span>
+<span class="nc" id="L501">		GridBagLayout gbl_panel_1 = new GridBagLayout();</span>
+<span class="nc" id="L502">		gbl_panel_1.columnWidths = new int[] { 26, 31, 21, 25, 0 };</span>
+<span class="nc" id="L503">		gbl_panel_1.rowHeights = new int[] { 19, 0 };</span>
+<span class="nc" id="L504">		gbl_panel_1.columnWeights = new double[] { 0.0, 1.0, 0.0, 0.0,</span>
+				Double.MIN_VALUE };
+<span class="nc" id="L506">		gbl_panel_1.rowWeights = new double[] { 0.0, Double.MIN_VALUE };</span>
+<span class="nc" id="L507">		panel_1.setLayout(gbl_panel_1);</span>
+
+<span class="nc" id="L509">		final JLabel hourLabel = new JLabel(&quot; h:&quot;);</span>
+<span class="nc" id="L510">		GridBagConstraints gbc_hourLAbel = new GridBagConstraints();</span>
+<span class="nc" id="L511">		gbc_hourLAbel.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L512">		gbc_hourLAbel.insets = new Insets(0, 0, 0, 5);</span>
+<span class="nc" id="L513">		gbc_hourLAbel.gridx = 0;</span>
+<span class="nc" id="L514">		gbc_hourLAbel.gridy = 0;</span>
+<span class="nc" id="L515">		panel_1.add(hourLabel, gbc_hourLAbel);</span>
+
+<span class="nc" id="L517">		hourTextField = new JTextField();</span>
+<span class="nc" id="L518">		hourTextField.setText(&quot;01&quot;);</span>
+<span class="nc" id="L519">		GridBagConstraints gbc_hourTextField = new GridBagConstraints();</span>
+<span class="nc" id="L520">		gbc_hourTextField.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L521">		gbc_hourTextField.insets = new Insets(0, 0, 0, 5);</span>
+<span class="nc" id="L522">		gbc_hourTextField.gridx = 1;</span>
+<span class="nc" id="L523">		gbc_hourTextField.gridy = 0;</span>
+<span class="nc" id="L524">		panel_1.add(hourTextField, gbc_hourTextField);</span>
+<span class="nc" id="L525">		hourTextField.setColumns(10);</span>
+
+<span class="nc" id="L527">		final JLabel minuteLabel = new JLabel(&quot; m:&quot;);</span>
+<span class="nc" id="L528">		GridBagConstraints gbc_minuteLabel = new GridBagConstraints();</span>
+<span class="nc" id="L529">		gbc_minuteLabel.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L530">		gbc_minuteLabel.insets = new Insets(0, 0, 0, 5);</span>
+<span class="nc" id="L531">		gbc_minuteLabel.gridx = 2;</span>
+<span class="nc" id="L532">		gbc_minuteLabel.gridy = 0;</span>
+<span class="nc" id="L533">		panel_1.add(minuteLabel, gbc_minuteLabel);</span>
+
+<span class="nc" id="L535">		minuteTextField = new JTextField();</span>
+<span class="nc" id="L536">		minuteTextField.setText(&quot;00&quot;);</span>
+<span class="nc" id="L537">		GridBagConstraints gbc_minuteTextField = new GridBagConstraints();</span>
+<span class="nc" id="L538">		gbc_minuteTextField.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L539">		gbc_minuteTextField.gridx = 3;</span>
+<span class="nc" id="L540">		gbc_minuteTextField.gridy = 0;</span>
+<span class="nc" id="L541">		panel_1.add(minuteTextField, gbc_minuteTextField);</span>
+<span class="nc" id="L542">		minuteTextField.setColumns(10);</span>
+
+<span class="nc" id="L544">		fixedTimeLabel.setEnabled(false);</span>
+<span class="nc" id="L545">		hourLabel.setEnabled(false);</span>
+<span class="nc" id="L546">		minuteLabel.setEnabled(false);</span>
+<span class="nc" id="L547">		hourTextField.setEnabled(false);</span>
+<span class="nc" id="L548">		minuteTextField.setEnabled(false);</span>
+
+<span class="nc" id="L550">		exitOptionComboBox.addItemListener(new ItemListener() {</span>
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				// only for selection events
+<span class="nc bnc" id="L554" title="All 2 branches missed.">				if (arg0.getStateChange() == ItemEvent.SELECTED) {</span>
+<span class="nc" id="L555">					String selectedString = exitOptionComboBox</span>
+<span class="nc" id="L556">							.getSelectedItem().toString();</span>
+					// select and reselect gui elements
+<span class="nc bnc" id="L558" title="All 2 branches missed.">					if (selectedString.equals(&quot;feste Anzahl&quot;)) {</span>
+<span class="nc" id="L559">						amountRoundsLabel.setEnabled(true);</span>
+<span class="nc" id="L560">						amountRoundsTextField.setEditable(true);</span>
+<span class="nc" id="L561">						fixedTimeLabel.setEnabled(false);</span>
+<span class="nc" id="L562">						hourLabel.setEnabled(false);</span>
+<span class="nc" id="L563">						minuteLabel.setEnabled(false);</span>
+<span class="nc" id="L564">						hourTextField.setEnabled(false);</span>
+<span class="nc" id="L565">						minuteTextField.setEnabled(false);</span>
+
+<span class="nc bnc" id="L567" title="All 2 branches missed.">					} else if (selectedString.equals(&quot;manueller Abbruch&quot;)) {</span>
+<span class="nc" id="L568">						amountRoundsLabel.setEnabled(false);</span>
+<span class="nc" id="L569">						amountRoundsTextField.setEditable(false);</span>
+<span class="nc" id="L570">						fixedTimeLabel.setEnabled(false);</span>
+<span class="nc" id="L571">						hourLabel.setEnabled(false);</span>
+<span class="nc" id="L572">						minuteLabel.setEnabled(false);</span>
+<span class="nc" id="L573">						hourTextField.setEnabled(false);</span>
+<span class="nc" id="L574">						minuteTextField.setEnabled(false);</span>
+
+<span class="nc bnc" id="L576" title="All 2 branches missed.">					} else if (selectedString.equals(&quot;feste Zeit&quot;)) {</span>
+<span class="nc" id="L577">						amountRoundsLabel.setEnabled(false);</span>
+<span class="nc" id="L578">						amountRoundsTextField.setEditable(false);</span>
+<span class="nc" id="L579">						fixedTimeLabel.setEnabled(true);</span>
+<span class="nc" id="L580">						hourLabel.setEnabled(true);</span>
+<span class="nc" id="L581">						minuteLabel.setEnabled(true);</span>
+<span class="nc" id="L582">						hourTextField.setEnabled(true);</span>
+<span class="nc" id="L583">						minuteTextField.setEnabled(true);</span>
+					}
+				}
+<span class="nc" id="L586">			}</span>
+		});
+
+<span class="nc" id="L589">		optionPanel.add(amountRoundsLabel, gbc_amountRoundsLabel);</span>
+<span class="nc" id="L590">		optionPanel.add(amountRoundsTextField, gbc_amountRoundsTextField);</span>
+
+<span class="nc" id="L592">		optionPanel.add(fixedTimeLabel, gbc_fixedTimeLabel);</span>
+
+		// start button
+<span class="nc" id="L595">		JButton startButton = new JButton(&quot;Berechnung beginnen&quot;);</span>
+<span class="nc" id="L596">		GridBagConstraints gbc_startButton = new GridBagConstraints();</span>
+<span class="nc" id="L597">		gbc_startButton.insets = new Insets(0, 0, 5, 0);</span>
+<span class="nc" id="L598">		gbc_startButton.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L599">		gbc_startButton.gridwidth = 3;</span>
+<span class="nc" id="L600">		gbc_startButton.gridx = 0;</span>
+<span class="nc" id="L601">		gbc_startButton.gridy = 1;</span>
+<span class="nc" id="L602">		getContentPane().add(startButton, gbc_startButton);</span>
+
+<span class="nc" id="L604">		startButton.addActionListener(new AbstractAction() {</span>
+			private static final long serialVersionUID = -6539453133180730039L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L609">				boolean optionsOk = checkOptions();</span>
+<span class="nc bnc" id="L610" title="All 2 branches missed.">				if (optionsOk) {</span>
+<span class="nc" id="L611">					String selectedString = exitOptionComboBox</span>
+<span class="nc" id="L612">							.getSelectedItem().toString();</span>
+<span class="nc" id="L613">					Matcher matcher = new Matcher(selectedString,</span>
+<span class="nc" id="L614">							scribeIsAuthorCheckbox.isSelected(),</span>
+<span class="nc" id="L615">							moderatorNotReviewerGroupCheckbox.isSelected());</span>
+
+<span class="nc" id="L617">					int amountRounds = 0;</span>
+<span class="nc" id="L618">					int hour = 0;</span>
+<span class="nc" id="L619">					int minute = 0;</span>
+
+<span class="nc bnc" id="L621" title="All 2 branches missed.">					if (!amountRoundsTextField.getText().isEmpty()) {</span>
+<span class="nc" id="L622">						amountRounds = Integer.parseInt(amountRoundsTextField</span>
+<span class="nc" id="L623">								.getText());</span>
+					}
+
+<span class="nc bnc" id="L626" title="All 2 branches missed.">					if (!hourTextField.getText().isEmpty()) {</span>
+<span class="nc" id="L627">						hour = Integer.parseInt(hourTextField.getText());</span>
+					}
+
+<span class="nc bnc" id="L630" title="All 2 branches missed.">					if (!minuteTextField.getText().isEmpty()) {</span>
+<span class="nc" id="L631">						minute = Integer.parseInt(minuteTextField.getText());</span>
+					}
+
+<span class="nc" id="L634">					ExecutingFrame frame = new ExecutingFrame();</span>
+<span class="nc" id="L635">					dispose();</span>
+<span class="nc" id="L636">					frame.showFrame(matcher, selectedString, amountRounds,</span>
+							hour, minute);
+				}
+
+<span class="nc" id="L640">			}</span>
+
+		});
+
+<span class="nc" id="L644">	}</span>
+
+	/**
+	 * @return the selected row in the table of the participants
+	 */
+	public static int[] getselectedParticipantRows() {
+<span class="nc" id="L650">		return participantTable.getSelectedRows();</span>
+	}
+
+	public static JTree getRoomTree() {
+<span class="nc" id="L654">		return roomTree;</span>
+	}
+
+	/**
+	 * This method checks if all necessary fields/table are filled
+	 * 
+	 * @return true if everything is ok
+	 */
+	private boolean checkOptions() {
+<span class="nc" id="L663">		String selectedString = exitOptionComboBox.getSelectedItem().toString();</span>
+
+		// no rounds
+<span class="nc bnc" id="L666" title="All 2 branches missed.">		if (selectedString.equals(&quot;feste Anzahl&quot;)) {</span>
+			try {
+<span class="nc" id="L668">				int rounds = Integer.parseInt(amountRoundsTextField.getText());</span>
+<span class="nc bnc" id="L669" title="All 2 branches missed.">				if (rounds &lt;= 0) {</span>
+<span class="nc" id="L670">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Anzahl Runden muss &gt;0 sein!&quot;,
+							&quot;Anzahl Runden Error&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L673">					return false;</span>
+				}
+<span class="nc" id="L675">			} catch (NumberFormatException fne) {</span>
+<span class="nc" id="L676">				JOptionPane.showMessageDialog(null,</span>
+						&quot;Anzahl Runden muss eine Zahl sein!&quot;,
+						&quot;Anzahl Runden Error&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L679">				return false;</span>
+<span class="nc" id="L680">			}</span>
+
+		}
+
+		// no time
+<span class="nc bnc" id="L685" title="All 2 branches missed.">		if (selectedString.equals(&quot;feste Zeit&quot;)) {</span>
+			try {
+<span class="nc" id="L687">				int hours = Integer.parseInt(hourTextField.getText());</span>
+<span class="nc" id="L688">				int minutes = Integer.parseInt(minuteTextField.getText());</span>
+
+<span class="nc bnc" id="L690" title="All 4 branches missed.">				if (hours == 0 &amp;&amp; minutes == 0) {</span>
+<span class="nc" id="L691">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Zeit darf nicht 0 sein!&quot;, &quot;Zeit 0&quot;,
+							JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L694">					return false;</span>
+				}
+
+<span class="nc" id="L697">			} catch (NumberFormatException nfe) {</span>
+<span class="nc" id="L698">				JOptionPane.showMessageDialog(null,</span>
+						&quot;Gewählte Zeit muss eine Zahl sein!&quot;, &quot;Zeit Error&quot;,
+						JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L701">				return false;</span>
+<span class="nc" id="L702">			}</span>
+		}
+
+		// no participants
+<span class="nc bnc" id="L706" title="All 2 branches missed.">		if (ParticipantTableModel.getInstance().isEmpty()) {</span>
+<span class="nc" id="L707">			JOptionPane.showMessageDialog(null,</span>
+					&quot;Es muss mindestens einen Teilnehmer geben!&quot;,
+					&quot;Teilnehmerliste leer&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L710">			return false;</span>
+		}
+
+		// no reviews
+<span class="nc bnc" id="L714" title="All 2 branches missed.">		if (!RoomTreeModel.hasReviews()) {</span>
+<span class="nc" id="L715">			JOptionPane.showMessageDialog(null,</span>
+					&quot;Es muss mindestens ein Review geben!&quot;, &quot;Keine Reviews&quot;,
+					JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L718">			return false;</span>
+		}
+
+<span class="nc" id="L721">		return true;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

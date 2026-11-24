@@ -76,7 +76,9 @@ public class RandomFunctions {
 		// list
 		for (int i = n; i > 0; i--) {
 
-			Review currentReview = reviews.get(random.nextInt(i));
+			// remove() instead of get(): draw without replacement, so every
+			// review ends up in the temp list exactly once
+			Review currentReview = reviews.remove(random.nextInt(i));
 			currentReview.setAssignedRoom(null);
 			currentReview.setModerator(null);
 			currentReview.setScribe(null);
@@ -84,7 +86,6 @@ public class RandomFunctions {
 			notWorkingReviewPlan.addTemp(currentReview);
 		}
 
-		notWorkingReviewPlan.getReviews().clear();
 
 	}
 

@@ -1,0 +1,4 @@
+lib-test/
+build-test/
+reports/jacoco/jacoco.exec
+reports/jacoco-pseudo/jacoco.exec

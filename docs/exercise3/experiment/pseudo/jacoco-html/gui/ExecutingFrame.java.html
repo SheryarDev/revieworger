@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExecutingFrame.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">gui</a> &gt; <span class="el_source">ExecutingFrame.java</span></div><h1>ExecutingFrame.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena K�fer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena K�fer - initial version
+ *******************************************************************************/
+package gui;
+
+import io.EmailDelivery;
+import io.FileProcessor;
+import io.IODialog;
+import io.TableOutputter;
+
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+
+import data.Review;
+import data.ReviewPlan;
+import logic.Matcher;
+import logic.RandomFunctions;
+
+/**
+ * This class shows a frame with a progress bar while Oger is running
+ */
+<span class="nc" id="L46">public class ExecutingFrame {</span>
+
+<span class="nc" id="L48">	ArrayList&lt;Review&gt; reviews = new ArrayList&lt;Review&gt;();</span>
+<span class="nc" id="L49">	boolean foundSolution = false;</span>
+<span class="nc" id="L50">	boolean stopped = false;</span>
+	JFrame executingFrame;
+
+	/**
+	 * @param matcher
+	 *            the matcher which does the calculation
+	 */
+	public void showFrame(Matcher matcher, String endingOption, int rounds,
+			int hours, int minutes) {
+<span class="nc" id="L59">		ExecutorService executorService = Executors.newCachedThreadPool();</span>
+<span class="nc" id="L60">		ReviewPlan plan = ReviewPlan.getInstance();</span>
+
+<span class="nc" id="L62">		executingFrame = new JFrame();</span>
+<span class="nc" id="L63">		executingFrame.setSize(300, 100);</span>
+<span class="nc" id="L64">		executingFrame.setTitle(&quot;Berechne&quot;);</span>
+<span class="nc" id="L65">		JPanel progressPanel = new JPanel();</span>
+
+<span class="nc" id="L67">		JProgressBar progressBar = new JProgressBar(1, 100);</span>
+<span class="nc" id="L68">		progressBar.setValue(0);</span>
+
+<span class="nc" id="L70">		progressPanel.add(progressBar);</span>
+
+<span class="nc" id="L72">		executingFrame.add(progressPanel);</span>
+
+<span class="nc" id="L74">		JPanel manualPanel = new JPanel();</span>
+<span class="nc" id="L75">		JButton stopButton = new JButton(&quot;Stop&quot;);</span>
+<span class="nc" id="L76">		manualPanel.add(stopButton);</span>
+<span class="nc" id="L77">		manualPanel.setVisible(false);</span>
+
+<span class="nc" id="L79">		executingFrame.add(manualPanel);</span>
+
+<span class="nc" id="L81">		executingFrame.pack();</span>
+<span class="nc" id="L82">		executingFrame.setVisible(true);</span>
+
+		// fixed rounds
+<span class="nc bnc" id="L85" title="All 2 branches missed.">		if (endingOption.equals(&quot;feste Anzahl&quot;)) {</span>
+
+<span class="nc" id="L87">			progressBar.setMaximum(rounds);</span>
+<span class="nc" id="L88">			progressBar.setMinimum(0);</span>
+
+<span class="nc bnc" id="L90" title="All 2 branches missed.">			for (int i = 0; i &lt; rounds; i++) {</span>
+<span class="nc" id="L91">				Future&lt;ArrayList&lt;Review&gt;&gt; future = executorService</span>
+<span class="nc" id="L92">						.submit(matcher);</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">				while (!future.isDone()) {</span>
+					// wait till finished
+				}
+				try {
+<span class="nc" id="L97">					reviews = future.get();</span>
+					// result
+<span class="nc bnc" id="L99" title="All 2 branches missed.">					if (reviews != null) {</span>
+<span class="nc" id="L100">						progressBar.setValue(rounds);</span>
+<span class="nc" id="L101">						foundSolution = true;</span>
+<span class="nc" id="L102">						break;</span>
+
+						// shuffle and try again
+					} else {
+<span class="nc" id="L106">						progressBar.setValue(progressBar.getValue() + 1);</span>
+<span class="nc" id="L107">						RandomFunctions.shuffleReviews(plan);</span>
+					}
+<span class="nc" id="L109">				} catch (InterruptedException | ExecutionException e) {</span>
+<span class="nc" id="L110">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Fehler bei der Ausf�hrung.&quot;, &quot;Fehler&quot;,
+							JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L113">					e.printStackTrace();</span>
+<span class="nc" id="L114">				}</span>
+
+<span class="nc" id="L116">				progressBar.setValue(i);</span>
+<span class="nc" id="L117">				future.cancel(true);</span>
+			}
+
+		}
+
+		// fixed time
+<span class="nc bnc" id="L123" title="All 2 branches missed.">		else if (endingOption.equals(&quot;feste Zeit&quot;)) {</span>
+
+<span class="nc" id="L125">			int minutesToWait = hours * 60 + minutes;</span>
+
+<span class="nc" id="L127">			progressBar.setMaximum(minutesToWait);</span>
+<span class="nc" id="L128">			progressBar.setMinimum(0);</span>
+
+<span class="nc" id="L130">			Date currentDate = new Date();</span>
+<span class="nc" id="L131">			Date startDate = new Date();</span>
+<span class="nc" id="L132">			Date finishingDate = new Date(startDate.getTime()</span>
+					+ minutesToWait * 60000L);
+
+			// wait till wished date arrived
+<span class="nc bnc" id="L136" title="All 2 branches missed.">			while (currentDate.before(finishingDate)) {</span>
+<span class="nc" id="L137">				Future&lt;ArrayList&lt;Review&gt;&gt; future = executorService</span>
+<span class="nc" id="L138">						.submit(matcher);</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">				while (!future.isDone()) {</span>
+					// wait till finished
+				}
+				try {
+<span class="nc" id="L143">					reviews = future.get();</span>
+					// result
+<span class="nc bnc" id="L145" title="All 2 branches missed.">					if (reviews != null) {</span>
+<span class="nc" id="L146">						progressBar.setValue(minutesToWait);</span>
+<span class="nc" id="L147">						foundSolution = true;</span>
+<span class="nc" id="L148">						break;</span>
+
+						// shuffle and try again
+					} else {
+<span class="nc" id="L152">						progressBar.setValue(progressBar.getValue() + 1);</span>
+<span class="nc" id="L153">						RandomFunctions.shuffleReviews(plan);</span>
+					}
+<span class="nc" id="L155">				} catch (InterruptedException | ExecutionException e) {</span>
+<span class="nc" id="L156">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Fehler bei der Ausf�hrung.&quot;, &quot;Fehler&quot;,
+							JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L159">					e.printStackTrace();</span>
+<span class="nc" id="L160">				}</span>
+<span class="nc" id="L161">				currentDate = new Date();</span>
+<span class="nc" id="L162">				int minuteDifference = (int) ((currentDate.getTime() - startDate</span>
+<span class="nc" id="L163">						.getTime()) / 60000L);</span>
+<span class="nc" id="L164">				progressBar.setValue(minuteDifference);</span>
+<span class="nc" id="L165">				future.cancel(true);</span>
+<span class="nc" id="L166">			}</span>
+
+<span class="nc" id="L168">		}</span>
+
+		// manually
+		else {
+<span class="nc" id="L172">			manualPanel.setVisible(true);</span>
+<span class="nc" id="L173">			progressPanel.setVisible(false);</span>
+
+<span class="nc" id="L175">			stopButton.addActionListener(new AbstractAction() {</span>
+
+				/**
+				 * 
+				 */
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L184">					stopped = true;</span>
+
+<span class="nc" id="L186">				}</span>
+
+			});
+
+<span class="nc bnc" id="L190" title="All 2 branches missed.">			while (!stopped) {</span>
+<span class="nc" id="L191">				Future&lt;ArrayList&lt;Review&gt;&gt; future = executorService</span>
+<span class="nc" id="L192">						.submit(matcher);</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">				while (!future.isDone()) {</span>
+					// wait till finished
+				}
+				try {
+<span class="nc" id="L197">					reviews = future.get();</span>
+					// result
+<span class="nc bnc" id="L199" title="All 2 branches missed.">					if (reviews != null) {</span>
+<span class="nc" id="L200">						foundSolution = true;</span>
+<span class="nc" id="L201">						break;</span>
+
+						// shuffle and try again
+					} else {
+<span class="nc" id="L205">						RandomFunctions.shuffleReviews(plan);</span>
+					}
+<span class="nc" id="L207">				} catch (InterruptedException | ExecutionException e) {</span>
+<span class="nc" id="L208">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Fehler bei der Ausf�hrung.&quot;, &quot;Fehler&quot;,
+							JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L211">					e.printStackTrace();</span>
+<span class="nc" id="L212">				}</span>
+
+<span class="nc" id="L214">				future.cancel(true);</span>
+<span class="nc" id="L215">			}</span>
+
+		}
+
+<span class="nc" id="L219">		executingFrame.dispose();</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">		if (!foundSolution) {</span>
+
+<span class="nc" id="L223">			showNoSolutionFrame();</span>
+
+		} else {
+<span class="nc" id="L226">			showSolutionFrame(matcher);</span>
+		}
+<span class="nc" id="L228">	}</span>
+
+	/**
+	 * Shows a frame with the possibilities after a solution was found
+	 */
+	private void showSolutionFrame(final Matcher matcher) {
+
+<span class="nc" id="L235">		final JFrame solutionFrame = new JFrame();</span>
+<span class="nc" id="L236">		solutionFrame.setLayout(new GridLayout(2, 1));</span>
+
+<span class="nc" id="L238">		JLabel optionLabel = new JLabel(</span>
+				&quot;Es wurde eine L�sung gefunden. Sie haben folgende M�glichkeiten: &quot;);
+<span class="nc" id="L240">		solutionFrame.add(optionLabel);</span>
+
+<span class="nc" id="L242">		JPanel optionPanel = new JPanel();</span>
+<span class="nc" id="L243">		optionPanel.setLayout(new GridLayout(1, 3));</span>
+<span class="nc" id="L244">		solutionFrame.add(optionPanel);</span>
+
+<span class="nc" id="L246">		JButton saveButton = new JButton(&quot;Ergebnis speichern&quot;);</span>
+<span class="nc" id="L247">		optionPanel.add(saveButton);</span>
+
+<span class="nc" id="L249">		saveButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L258">				File file = IODialog.showSaveDialog(&quot;.txt&quot;, false);</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">				if (file != null) {</span>
+					PrintWriter pw;
+					try {
+<span class="nc" id="L262">						pw = new PrintWriter(file);</span>
+<span class="nc" id="L263">						pw.print(&quot;&quot;);</span>
+<span class="nc" id="L264">						pw.close();</span>
+<span class="nc" id="L265">					} catch (FileNotFoundException e1) {</span>
+<span class="nc" id="L266">						JOptionPane.showMessageDialog(null,</span>
+								&quot;Datei konnte nicht gefunden werden&quot;, &quot;Fehler&quot;,
+								JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L269">					}</span>
+
+<span class="nc" id="L271">					FileProcessor fr = new FileProcessor();</span>
+<span class="nc" id="L272">					fr.printResult(reviews, file.getAbsolutePath());</span>
+<span class="nc" id="L273">					fr.printResultNoMail(reviews, file.getAbsolutePath());</span>
+
+<span class="nc" id="L275">					File texFile = new File(file.getAbsolutePath().replace(</span>
+							&quot;.txt&quot;, &quot;.tex&quot;));
+
+<span class="nc bnc" id="L278" title="All 2 branches missed.">					if (texFile != null) {</span>
+						PrintWriter printWriter;
+						try {
+<span class="nc" id="L281">							printWriter = new PrintWriter(texFile);</span>
+<span class="nc" id="L282">							printWriter.print(&quot;&quot;);</span>
+<span class="nc" id="L283">							printWriter.close();</span>
+<span class="nc" id="L284">						} catch (FileNotFoundException e1) {</span>
+<span class="nc" id="L285">							JOptionPane.showMessageDialog(null,</span>
+									&quot;Datei konnte nicht gefunden werden&quot;,
+									&quot;Fehler&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L288">						}</span>
+					}
+
+<span class="nc" id="L291">					TableOutputter.createTable(texFile.getAbsolutePath(),</span>
+							reviews, matcher);
+				}
+<span class="nc" id="L294">			}</span>
+
+		});
+
+<span class="nc" id="L298">		JButton emailButton = new JButton(&quot;Email versenden&quot;);</span>
+<span class="nc" id="L299">		optionPanel.add(emailButton);</span>
+
+<span class="nc" id="L301">		emailButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L310">				solutionFrame.dispose();</span>
+<span class="nc" id="L311">				EmailDelivery.deliverEmail(reviews);</span>
+<span class="nc" id="L312">			}</span>
+
+		});
+
+<span class="nc" id="L316">		JButton cancelButton = new JButton(&quot;Beenden&quot;);</span>
+<span class="nc" id="L317">		optionPanel.add(cancelButton);</span>
+
+<span class="nc" id="L319">		cancelButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L328">				solutionFrame.dispose();</span>
+
+<span class="nc" id="L330">			}</span>
+
+		});
+
+<span class="nc" id="L334">		solutionFrame.setVisible(true);</span>
+<span class="nc" id="L335">		solutionFrame.pack();</span>
+<span class="nc" id="L336">	}</span>
+
+	/**
+	 * Shows a frame if no solution was found
+	 */
+	private void showNoSolutionFrame() {
+<span class="nc" id="L342">		final JFrame noSolutionFrame = new JFrame();</span>
+<span class="nc" id="L343">		noSolutionFrame.setLayout(new GridLayout(5, 1));</span>
+
+<span class="nc" id="L345">		JLabel textLabel = new JLabel();</span>
+<span class="nc" id="L346">		noSolutionFrame.add(textLabel);</span>
+<span class="nc" id="L347">		textLabel.setText(&quot;Konnte keine L�sung finden. M�glich Optionen: &quot;);</span>
+
+<span class="nc" id="L349">		JLabel lineOneLabel = new JLabel();</span>
+<span class="nc" id="L350">		noSolutionFrame.add(lineOneLabel);</span>
+<span class="nc" id="L351">		lineOneLabel.setText(&quot;- Bieten Sie mehr Slots/R�ume an &quot;);</span>
+
+<span class="nc" id="L353">		JLabel lineTwoLabel = new JLabel();</span>
+<span class="nc" id="L354">		noSolutionFrame.add(lineTwoLabel);</span>
+<span class="nc" id="L355">		lineTwoLabel</span>
+<span class="nc" id="L356">				.setText(&quot;- �ndern Sie die Einstellungen zu Notar oder Moderator&quot;);</span>
+
+<span class="nc" id="L358">		JLabel lineThreeLabel = new JLabel();</span>
+<span class="nc" id="L359">		noSolutionFrame.add(lineThreeLabel);</span>
+<span class="nc" id="L360">		lineThreeLabel</span>
+<span class="nc" id="L361">				.setText(&quot;- F�hren Sie die Berechnung erneut mit mehr Wiederholungen durch&quot;);</span>
+
+<span class="nc" id="L363">		JPanel optionPanel = new JPanel();</span>
+<span class="nc" id="L364">		optionPanel.setLayout(new GridLayout(1, 2));</span>
+
+<span class="nc" id="L366">		JButton cancelButton = new JButton(&quot;Beenden&quot;);</span>
+<span class="nc" id="L367">		optionPanel.add(cancelButton);</span>
+
+<span class="nc" id="L369">		noSolutionFrame.add(optionPanel);</span>
+<span class="nc" id="L370">		noSolutionFrame.setVisible(true);</span>
+<span class="nc" id="L371">		noSolutionFrame.pack();</span>
+
+<span class="nc" id="L373">		cancelButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L382">				noSolutionFrame.dispose();</span>
+<span class="nc" id="L383">			}</span>
+
+		});
+
+<span class="nc" id="L387">		JButton againButton = new JButton(&quot;Erneut versuchen&quot;);</span>
+<span class="nc" id="L388">		optionPanel.add(againButton);</span>
+
+<span class="nc" id="L390">		againButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L399">				noSolutionFrame.dispose();</span>
+
+<span class="nc" id="L401">				Gui.getInstance().setVisible(true);</span>
+<span class="nc" id="L402">			}</span>
+
+		});
+<span class="nc" id="L405">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

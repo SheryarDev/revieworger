@@ -1,0 +1,598 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailDelivery.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">io</a> &gt; <span class="el_source">EmailDelivery.java</span></div><h1>EmailDelivery.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena K�fer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena K�fer - initial version
+ *******************************************************************************/
+package io;
+
+import java.awt.Desktop;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Scanner;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.table.TableModel;
+
+import data.ParticipantTableModel;
+import data.Review;
+import data.Participant;
+import data.Room;
+import data.Slot;
+
+/**
+ * This class holds the functionality for the delivery of the emails to every
+ * moderator
+ * 
+ */
+<span class="nc" id="L52">public class EmailDelivery {</span>
+
+<span class="nc" id="L54">	private final static Charset ENCODING = StandardCharsets.UTF_8;</span>
+<span class="nc" id="L55">	static String finalEmailText = new String(&quot;&lt;html&gt;&quot;);</span>
+
+<span class="nc" id="L57">	final static JFrame optionFrame = new JFrame();</span>
+
+	static ArrayList&lt;Review&gt; reviews;
+
+	/**
+	 * Opens the e-mails in the standard email program
+	 * 
+	 * @param reviews
+	 *            the list of reviews
+	 */
+	public static void deliverEmail(final ArrayList&lt;Review&gt; reviewList) {
+<span class="nc" id="L68">		reviews = reviewList;</span>
+
+<span class="nc" id="L70">		optionFrame.setLayout(new GridLayout(2, 1));</span>
+
+<span class="nc" id="L72">		JLabel optionLabel = new JLabel(</span>
+				&quot;Bitte w�hlen Sie ein Textdokument, das den Inhalt der e-Mail enth�lt&quot;);
+<span class="nc" id="L74">		optionFrame.add(optionLabel);</span>
+
+<span class="nc" id="L76">		JButton browseButton = new JButton(&quot;Browse&quot;);</span>
+<span class="nc" id="L77">		optionFrame.add(browseButton);</span>
+
+<span class="nc" id="L79">		optionFrame.setVisible(true);</span>
+<span class="nc" id="L80">		optionFrame.pack();</span>
+
+<span class="nc" id="L82">		browseButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L91">				JFileChooser fileChooser = new JFileChooser(&quot;.txt&quot;);</span>
+<span class="nc" id="L92">				fileChooser.setFileFilter(new TxtDialogFilter());</span>
+
+<span class="nc" id="L94">				int result = fileChooser.showOpenDialog(null);</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">				switch (result) {</span>
+
+				case JFileChooser.APPROVE_OPTION:
+
+<span class="nc" id="L99">					optionFrame.setVisible(false);</span>
+
+<span class="nc" id="L101">					showTextFrame(fileChooser);</span>
+
+				}
+<span class="nc" id="L104">			}</span>
+
+			/**
+			 * Shows the read text
+			 * 
+			 * @param fileChooser
+			 *            the file chooser which chose the file
+			 */
+			private void showTextFrame(JFileChooser fileChooser) {
+<span class="nc" id="L113">				final JFrame textFrame = new JFrame();</span>
+<span class="nc" id="L114">				textFrame.setLayout(new GridLayout(5, 1));</span>
+
+<span class="nc" id="L116">				JLabel optionLabel = new JLabel(&quot;Folgender Text wurde gelesen:&quot;);</span>
+<span class="nc" id="L117">				textFrame.add(optionLabel);</span>
+
+<span class="nc" id="L119">				Scanner scanner = null;</span>
+				try {
+<span class="nc" id="L121">					scanner = new Scanner(new BufferedReader(new FileReader(fileChooser.getSelectedFile(), ENCODING))); </span>
+
+<span class="nc" id="L123">				} catch (IOException io) {</span>
+<span class="nc" id="L124">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Fehler beim �ffnen der Datei&quot;,
+							&quot;�ffnen fehlgeschlagen&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L127">				} catch (IllegalArgumentException iae) {</span>
+<span class="nc" id="L128">					JOptionPane.showMessageDialog(null, &quot;Encoding falsch&quot;,</span>
+							&quot;Einlesen fehlgeschlagen&quot;,
+							JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L131">				}</span>
+
+<span class="nc" id="L133">				finalEmailText = &quot;&lt;html&gt;&quot;;</span>
+
+<span class="nc bnc" id="L135" title="All 2 branches missed.">				while (scanner.hasNext()) {</span>
+<span class="nc" id="L136">					String currentLine = scanner.nextLine();</span>
+<span class="nc" id="L137">					finalEmailText = finalEmailText + currentLine + &quot;&lt;br&gt;&quot;;</span>
+<span class="nc" id="L138">				}</span>
+
+<span class="nc" id="L140">				String emailText = finalEmailText</span>
+						+ &quot;&lt;br&gt;Review Gruppe i: Raum x von y bis z&lt;br&gt;&quot;
+						+ &quot;Autor: &lt;br&gt;&quot; + &quot;Moderator: &lt;br&gt;&quot; + &quot;Notar: &lt;br&gt;&quot;
+						+ &quot;Gutachter: &lt;br&gt;&quot;;
+
+<span class="nc" id="L145">				JLabel textLabel = new JLabel(emailText);</span>
+<span class="nc" id="L146">				textFrame.add(textLabel);</span>
+
+<span class="nc" id="L148">				JPanel buttonPanel = new JPanel();</span>
+<span class="nc" id="L149">				textFrame.add(buttonPanel);</span>
+<span class="nc" id="L150">				buttonPanel.setLayout(new GridLayout(1, 2));</span>
+
+<span class="nc" id="L152">				JButton backButton = new JButton(&quot;Zur�ck&quot;);</span>
+<span class="nc" id="L153">				buttonPanel.add(backButton);</span>
+
+<span class="nc" id="L155">				backButton.addActionListener(new AbstractAction() {</span>
+
+					/**
+					 * 
+					 */
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L164">						textFrame.dispose();</span>
+<span class="nc" id="L165">						optionFrame.setVisible(true);</span>
+<span class="nc" id="L166">					}</span>
+				});
+
+<span class="nc" id="L169">				JButton nextButton = new JButton(&quot;Weiter&quot;);</span>
+<span class="nc" id="L170">				buttonPanel.add(nextButton);</span>
+
+<span class="nc" id="L172">				nextButton.addActionListener(new AbstractAction() {</span>
+
+					/**
+					 * 
+					 */
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L181">						textFrame.dispose();</span>
+<span class="nc" id="L182">						showGreetingFrame();</span>
+
+<span class="nc" id="L184">					}</span>
+
+				});
+
+<span class="nc" id="L188">				textFrame.setVisible(true);</span>
+<span class="nc" id="L189">				textFrame.pack();</span>
+<span class="nc" id="L190">			}</span>
+
+		});
+
+<span class="nc" id="L194">	}</span>
+
+	/**
+	 * Shows a frame to insert a greeting and a name
+	 */
+	private static void showGreetingFrame() {
+<span class="nc" id="L200">		final JFrame greetingFrame = new JFrame();</span>
+
+<span class="nc" id="L202">		greetingFrame.setLayout(new GridLayout(5, 1));</span>
+
+<span class="nc" id="L204">		JLabel greetingLabel = new JLabel(</span>
+				&quot;Bitte geben Sie eine Gru�formel ein:&quot;);
+<span class="nc" id="L206">		greetingFrame.add(greetingLabel);</span>
+
+<span class="nc" id="L208">		final JTextField greetingField = new JTextField();</span>
+<span class="nc" id="L209">		greetingFrame.add(greetingField);</span>
+
+<span class="nc" id="L211">		JLabel nameLabel = new JLabel(&quot;Bitte geben Sie Ihren Namen ein:&quot;);</span>
+<span class="nc" id="L212">		greetingFrame.add(nameLabel);</span>
+
+<span class="nc" id="L214">		final JTextField nameField = new JTextField();</span>
+<span class="nc" id="L215">		greetingFrame.add(nameField);</span>
+
+<span class="nc" id="L217">		JButton nextButton = new JButton(&quot;Weiter&quot;);</span>
+<span class="nc" id="L218">		greetingFrame.add(nextButton);</span>
+
+<span class="nc" id="L220">		nextButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+<span class="nc bnc" id="L229" title="All 2 branches missed.">				if (nameField.getText().isEmpty()) {</span>
+<span class="nc" id="L230">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Bitte geben Sie einen Namen ein&quot;);
+				} else {
+<span class="nc" id="L233">					greetingFrame.dispose();</span>
+<span class="nc" id="L234">					sendMails(greetingField.getText(), nameField.getText());</span>
+				}
+<span class="nc" id="L236">			}</span>
+
+		});
+
+<span class="nc" id="L240">		greetingFrame.pack();</span>
+<span class="nc" id="L241">		greetingFrame.setVisible(true);</span>
+<span class="nc" id="L242">	}</span>
+
+	/**
+	 * Shows a frame on how many miliseconds delay the emails should be opened
+	 * with
+	 * 
+	 * @param greeting
+	 *            the selected greeting
+	 * @param name
+	 *            the selected name
+	 */
+	private static void sendMails(final String greeting, final String name) {
+
+<span class="nc" id="L255">		final JFrame delayFrame = new JFrame();</span>
+<span class="nc" id="L256">		delayFrame.setLayout(new GridLayout(4, 1));</span>
+
+<span class="nc" id="L258">		JLabel delayLabel1 = new JLabel(</span>
+				&quot;Bei zu schnellem �ffnen der E-Mails kann es zu Prolemen mit dem E-Mail-Programm kommen.&quot;);
+<span class="nc" id="L260">		JLabel delayLabel2 = new JLabel(</span>
+				&quot;Bitte geben Sie die Verz�gerung zwischen den einzelnen E-Mails in Millisekunden ein:&quot;);
+<span class="nc" id="L262">		delayFrame.add(delayLabel1);</span>
+<span class="nc" id="L263">		delayFrame.add(delayLabel2);</span>
+
+<span class="nc" id="L265">		final JTextField delayField = new JTextField(&quot;500&quot;);</span>
+<span class="nc" id="L266">		delayFrame.add(delayField);</span>
+
+<span class="nc" id="L268">		JButton button = new JButton(&quot;Weiter&quot;);</span>
+<span class="nc" id="L269">		delayFrame.add(button);</span>
+
+<span class="nc" id="L271">		button.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// check field
+<span class="nc" id="L281">				int delay = 0;</span>
+				try {
+<span class="nc" id="L283">					delay = Integer.parseInt(delayField.getText());</span>
+<span class="nc" id="L284">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L285">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Verz�gerung muss eine Zahl sein&quot;);
+<span class="nc" id="L287">				}</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">				if (delay &lt; 0) {</span>
+<span class="nc" id="L289">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Verz�gerung muss eine Zahl &gt; 0 sein&quot;);
+				} else {
+					// Send mails
+					Desktop desktop;
+<span class="nc bnc" id="L294" title="All 2 branches missed.">					if (Desktop.isDesktopSupported()</span>
+<span class="nc" id="L295">							&amp;&amp; (desktop = Desktop.getDesktop())</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">									.isSupported(Desktop.Action.MAIL)) {</span>
+						URI mailto;
+
+						// attach correct participants for every review
+<span class="nc bnc" id="L300" title="All 2 branches missed.">						for (Review currentReview : reviews) {</span>
+<span class="nc" id="L301">							String separateFinalEmailText = finalEmailText</span>
+									+ &quot;&lt;br&gt;Review &quot;
+<span class="nc" id="L303">									+ currentReview.getLetter()</span>
+									+ &quot; Raum &quot;
+<span class="nc" id="L305">									+ currentReview.getAssignedRoom()</span>
+<span class="nc" id="L306">											.getRoomID()</span>
+									+ &quot; am &quot;
+<span class="nc" id="L308">									+ currentReview.getAssignedRoom().getSlot()</span>
+<span class="nc" id="L309">											.getFormatedDate()</span>
+									+ &quot;&lt;br&gt;&quot;
+									+ &quot;Autor: &quot;
+<span class="nc" id="L312">									+ currentReview.getAuthor().getFirstName()</span>
+									+ &quot; &quot;
+<span class="nc" id="L314">									+ currentReview.getAuthor().getLastName()</span>
+									+ &quot; &quot;
+<span class="nc" id="L316">									+ currentReview.getAuthor()</span>
+<span class="nc" id="L317">											.geteMailAdress()</span>
+									+ &quot;&lt;br&gt;&quot;
+									+ &quot;Moderator:  &quot;
+<span class="nc" id="L320">									+ currentReview.getModerator()</span>
+<span class="nc" id="L321">											.getFirstName()</span>
+									+ &quot; &quot;
+<span class="nc" id="L323">									+ currentReview.getModerator()</span>
+<span class="nc" id="L324">											.getLastName()</span>
+									+ &quot; &quot;
+<span class="nc" id="L326">									+ currentReview.getModerator()</span>
+<span class="nc" id="L327">											.geteMailAdress()</span>
+									+ &quot;&lt;br&gt;&quot;
+									+ &quot;Notar:  &quot;
+<span class="nc" id="L330">									+ currentReview.getScribe().getFirstName()</span>
+									+ &quot; &quot;
+<span class="nc" id="L332">									+ currentReview.getScribe().getLastName()</span>
+									+ &quot; &quot;
+<span class="nc" id="L334">									+ currentReview.getScribe()</span>
+<span class="nc" id="L335">											.geteMailAdress() + &quot;&lt;br&gt;&quot;;</span>
+
+<span class="nc bnc" id="L337" title="All 2 branches missed.">							for (Participant reviewer : currentReview</span>
+<span class="nc" id="L338">									.getReviewers()) {</span>
+<span class="nc" id="L339">								separateFinalEmailText = separateFinalEmailText</span>
+										+ &quot;Gutachter:  &quot;
+<span class="nc" id="L341">										+ reviewer.getFirstName() + &quot; &quot;</span>
+<span class="nc" id="L342">										+ reviewer.getLastName() + &quot; &quot;</span>
+<span class="nc" id="L343">										+ reviewer.geteMailAdress() + &quot;&lt;br&gt;&quot;;</span>
+<span class="nc" id="L344">							}</span>
+
+							// greeting
+<span class="nc" id="L347">							separateFinalEmailText = separateFinalEmailText</span>
+									+ &quot;&lt;br&gt;&quot;;
+<span class="nc bnc" id="L349" title="All 2 branches missed.">							if (!greeting.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L350">								separateFinalEmailText = separateFinalEmailText</span>
+										+ greeting + &quot;&lt;br&gt;&quot;;
+							}
+<span class="nc" id="L353">							separateFinalEmailText = separateFinalEmailText</span>
+									+ name + &quot;&lt;br&gt;&quot;;
+
+							try {
+<span class="nc" id="L357">								String zeilenumbruch = System</span>
+<span class="nc" id="L358">										.getProperty(&quot;line.separator&quot;);</span>
+
+<span class="nc" id="L360">								separateFinalEmailText = separateFinalEmailText</span>
+<span class="nc" id="L361">										.replace(&quot;&lt;html&gt;&quot;, &quot;&quot;);</span>
+<span class="nc" id="L362">								separateFinalEmailText = separateFinalEmailText</span>
+<span class="nc" id="L363">										.replace(&quot;&lt;br&gt;&quot;, zeilenumbruch);</span>
+
+<span class="nc" id="L365">								String body = URLEncoder.encode(</span>
+										separateFinalEmailText, &quot;utf-8&quot;)
+<span class="nc" id="L367">										.replace(&quot;+&quot;, &quot;%20&quot;);</span>
+
+<span class="nc" id="L369">								String email = currentReview.getModerator()</span>
+<span class="nc" id="L370">										.geteMailAdress();</span>
+
+<span class="nc" id="L372">								mailto = new URI(&quot;mailto:&quot; + email</span>
+										+ &quot;?subject=SoPra%20Reviews&amp;body=&quot;
+										+ body);
+<span class="nc" id="L375">								desktop.mail(mailto);</span>
+
+								try {
+<span class="nc" id="L378">									Thread.sleep(delay);</span>
+<span class="nc" id="L379">								} catch (InterruptedException ex) {</span>
+<span class="nc" id="L380">									Thread.currentThread().interrupt();</span>
+<span class="nc" id="L381">								}</span>
+
+<span class="nc" id="L383">							} catch (URISyntaxException e1) {</span>
+<span class="nc" id="L384">								JOptionPane.showMessageDialog(null,</span>
+<span class="nc" id="L385">										e1.getLocalizedMessage());</span>
+<span class="nc" id="L386">							} catch (IOException e2) {</span>
+<span class="nc" id="L387">								JOptionPane.showMessageDialog(null,</span>
+<span class="nc" id="L388">										e2.getLocalizedMessage());</span>
+<span class="nc" id="L389">							}</span>
+
+<span class="nc" id="L391">						}</span>
+<span class="nc" id="L392">						delayFrame.dispose();</span>
+<span class="nc" id="L393">						showEndFrame(delayFrame);</span>
+
+					} else {
+<span class="nc" id="L396">						JOptionPane.showMessageDialog(null,</span>
+								&quot;Konnte kein E-Mail-Prgramm �ffnen&quot;);
+<span class="nc" id="L398">						optionFrame.setVisible(true);</span>
+					}
+				}
+<span class="nc" id="L401">			}</span>
+		});
+
+<span class="nc" id="L404">		delayFrame.setVisible(true);</span>
+<span class="nc" id="L405">		delayFrame.pack();</span>
+
+<span class="nc" id="L407">	}</span>
+
+	/**
+	 * Shows the frame after trying to send the emails
+	 * 
+	 * @param delayFrame
+	 *            the previous opened frame
+	 */
+	private static void showEndFrame(final JFrame delayFrame) {
+<span class="nc" id="L416">		final JFrame endFrame = new JFrame();</span>
+<span class="nc" id="L417">		endFrame.setLayout(new GridLayout(1, 2));</span>
+
+<span class="nc" id="L419">		JButton endButton = new JButton(&quot;Beenden&quot;);</span>
+<span class="nc" id="L420">		endFrame.add(endButton);</span>
+
+<span class="nc" id="L422">		endButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L431">				endFrame.dispose();</span>
+
+<span class="nc" id="L433">			}</span>
+		});
+
+<span class="nc" id="L436">		JButton againButton = new JButton(&quot;Neuer Versuch&quot;);</span>
+<span class="nc" id="L437">		endFrame.add(againButton);</span>
+
+<span class="nc" id="L439">		againButton.addActionListener(new AbstractAction() {</span>
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L448">				endFrame.dispose();</span>
+<span class="nc" id="L449">				delayFrame.setVisible(true);</span>
+
+<span class="nc" id="L451">			}</span>
+		});
+
+<span class="nc" id="L454">		endFrame.setVisible(true);</span>
+<span class="nc" id="L455">		endFrame.pack();</span>
+<span class="nc" id="L456">	}</span>
+
+	/**
+	 * This function loads a saved result and sends the e-mails
+	 * 
+	 * @return true if the delivery was successful
+	 */
+	public static boolean sendLoadedReviews() {
+<span class="nc" id="L464">		JFileChooser fileChooser = new JFileChooser(&quot;.xml&quot;);</span>
+<span class="nc" id="L465">		fileChooser.setFileFilter(new TxtDialogFilter());</span>
+
+<span class="nc" id="L467">		int result = fileChooser.showOpenDialog(null);</span>
+<span class="nc bnc" id="L468" title="All 2 branches missed.">		switch (result) {</span>
+
+		case JFileChooser.APPROVE_OPTION:
+
+<span class="nc" id="L472">			optionFrame.setVisible(false);</span>
+<span class="nc" id="L473">			boolean noError = loadReview(fileChooser);</span>
+<span class="nc bnc" id="L474" title="All 2 branches missed.">			if (noError) {</span>
+<span class="nc" id="L475">				return true;</span>
+			}
+<span class="nc" id="L477">			return false;</span>
+
+		default:
+<span class="nc" id="L480">			return false;</span>
+		}
+	}
+
+	/**
+	 * @param fileChooser
+	 *            the filechoser for the file
+	 * @return true if the loading was successful
+	 */
+	private static boolean loadReview(JFileChooser fileChooser) {
+<span class="nc" id="L490">		Scanner scanner = null;</span>
+<span class="nc" id="L491">		ArrayList&lt;Review&gt; reviews = new ArrayList&lt;Review&gt;();</span>
+<span class="nc" id="L492">		boolean error = false;</span>
+		try {
+<span class="nc" id="L494">			scanner = new Scanner(new BufferedReader(new FileReader(fileChooser.getSelectedFile()))); </span>
+			//scanner = new Scanner(fileChooser.getSelectedFile(),
+				//	ENCODING.name());
+<span class="nc" id="L497">		} catch (IOException io) {</span>
+<span class="nc" id="L498">			JOptionPane.showMessageDialog(null, &quot;Fehler beim �ffnen der Datei&quot;,</span>
+					&quot;�ffnen fehlgeschlagen&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L500">			error = true;</span>
+<span class="nc" id="L501">		} catch (IllegalArgumentException iae) {</span>
+<span class="nc" id="L502">			JOptionPane.showMessageDialog(null, &quot;Encoding falsch&quot;,</span>
+					&quot;Einlesen fehlgeschlagen&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L504">			error = true;</span>
+<span class="nc" id="L505">		}</span>
+
+<span class="nc" id="L507">		Review review = null;</span>
+<span class="nc" id="L508">		Room room = null;</span>
+
+<span class="nc" id="L510">		String currentLetter = &quot;&quot;;</span>
+		
+<span class="nc bnc" id="L512" title="All 4 branches missed.">		while (scanner.hasNextLine() &amp;&amp; !error) {</span>
+
+<span class="nc" id="L514">			String currentLine = scanner.nextLine();</span>
+
+<span class="nc bnc" id="L516" title="All 2 branches missed.">			if (!currentLine.startsWith(&quot;*x&quot;)) {</span>
+				
+<span class="nc" id="L518">				System.out.println(currentLine.charAt(0));</span>
+<span class="nc" id="L519">				System.out.println(currentLine.charAt(1));</span>
+<span class="nc" id="L520">				System.out.println(currentLine.charAt(2));</span>
+
+<span class="nc bnc" id="L522" title="All 2 branches missed.">				if (currentLine.contains(&quot;Review&quot;)) {</span>
+
+<span class="nc" id="L524">					String[] splitReview = currentLine.split(&quot; &quot;);</span>
+<span class="nc" id="L525">					SimpleDateFormat timeFormat = new SimpleDateFormat(&quot;HH:mm&quot;);</span>
+<span class="nc" id="L526">					SimpleDateFormat dateFormat = new SimpleDateFormat(</span>
+							&quot;dd.MM.yy&quot;);
+					// review group number room number from time clock to time
+					// clock
+					Date begin;
+					try {
+<span class="nc" id="L532">						Date date = dateFormat.parse(splitReview[5]);</span>
+<span class="nc" id="L533">						begin = timeFormat.parse(splitReview[7]);</span>
+<span class="nc" id="L534">						Date end = timeFormat.parse(splitReview[10]);</span>
+<span class="nc" id="L535">						room = new Room(splitReview[14], false, begin, end);</span>
+<span class="nc" id="L536">						room.setSlot(new Slot(date, begin, end));</span>
+<span class="nc" id="L537">						currentLetter = splitReview[1];</span>
+<span class="nc" id="L538">					} catch (ParseException e) {</span>
+<span class="nc" id="L539">						JOptionPane.showMessageDialog(null,</span>
+								&quot;Fehler beim Einlesen&quot;);
+<span class="nc" id="L541">						e.printStackTrace();</span>
+<span class="nc" id="L542">						error = true;</span>
+<span class="nc" id="L543">					}</span>
+
+<span class="nc bnc" id="L545" title="All 2 branches missed.">				} else if (currentLine.startsWith(&quot;Beamer&quot;)) {</span>
+					// do nothing
+
+				} else {
+					// role first last email group number
+<span class="nc" id="L550">					String[] split = currentLine.split(&quot; &quot;);</span>
+
+					try {
+
+<span class="nc" id="L554">						Participant current = new Participant(split[1],</span>
+								split[2], split[3], split[5]);
+
+<span class="nc bnc" id="L557" title="All 2 branches missed.">						if (currentLine.startsWith(&quot;Autor&quot;)) {</span>
+<span class="nc" id="L558">							review = new Review(current);</span>
+<span class="nc" id="L559">							review.setGroupNumber(current.getGroupNumber());</span>
+<span class="nc" id="L560">							review.setAssignedRoom(room);</span>
+<span class="nc" id="L561">							review.setLetter(currentLetter);</span>
+						}
+
+<span class="nc bnc" id="L564" title="All 2 branches missed.">						if (currentLine.startsWith(&quot;Moderator&quot;)) {</span>
+<span class="nc" id="L565">							review.setModerator(current);</span>
+						}
+
+<span class="nc bnc" id="L568" title="All 2 branches missed.">						if (currentLine.startsWith(&quot;Notar&quot;)) {</span>
+<span class="nc" id="L569">							review.setScribe(current);</span>
+						}
+
+<span class="nc bnc" id="L572" title="All 2 branches missed.">						if (currentLine.startsWith(&quot;Gutachter&quot;)) {</span>
+<span class="nc" id="L573">							review.addReviewer(current);</span>
+						}
+					
+<span class="nc" id="L576">					} catch (Exception e) {</span>
+<span class="nc" id="L577">						JOptionPane.showMessageDialog(null,</span>
+								&quot;Fehler beim Einlesen&quot;);
+<span class="nc" id="L579">						e.printStackTrace();</span>
+<span class="nc" id="L580">						error = true;</span>
+<span class="nc" id="L581">					}</span>
+
+<span class="nc" id="L583">				}</span>
+			} else {
+				// separator
+
+<span class="nc" id="L587">				reviews.add(review);</span>
+			}
+
+<span class="nc" id="L590">		}</span>
+<span class="nc bnc" id="L591" title="All 2 branches missed.">		if (!error) {</span>
+<span class="nc" id="L592">			deliverEmail(reviews);</span>
+<span class="nc" id="L593">			return true;</span>
+		}
+<span class="nc" id="L595">		return false;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

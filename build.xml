@@ -1,4 +1,4 @@
-<project name="ReviewOger" default="dist" basedir=".">
+<project name="ReviewOger" default="dist" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
 
 	<description>
         Builds the Review Oger Application
@@ -8,6 +8,31 @@
 	<property name="src" location="src" />
 	<property name="build" location="build" />
 	<property name="dist" location="dist" />
+
+	<!-- test / quality properties (exercise #3) -->
+	<property name="test.src" location="test" />
+	<!-- test classes are kept out of ${build} so the dist jar and the
+	     SpotBugs analysis (which scans build/) only see production code -->
+	<property name="test.build" location="build-test" />
+	<!-- test-only libraries are downloaded here by the "resolve" target -->
+	<property name="lib.test" location="lib-test" />
+	<property name="reports" location="reports" />
+
+	<property name="maven.central" value="https://repo1.maven.org/maven2" />
+	<property name="junit.version" value="4.13.2" />
+	<property name="hamcrest.version" value="1.3" />
+	<property name="pitest.version" value="1.30.2" />
+	<!-- runtime deps of pitest-entry that are not shaded into the PIT jars
+	     (needed by the XML report writer) -->
+	<property name="commons-text.version" value="1.14.0" />
+	<property name="commons-lang3.version" value="3.18.0" />
+
+	<!-- classes that PIT mutates: the testable core (model, matching
+	     algorithm, file output). gui.*, main.* and the Swing-dialog io
+	     classes need a display and are left out. -->
+	<property name="pit.targetClasses" value="data.*,logic.*,io.FileProcessor*,io.TableOutputter*" />
+	<!-- tests PIT runs against the mutants (override with -Dpit.targetTests=...) -->
+	<property name="pit.targetTests" value="*Test" />
 
 	<target name="init">
 		<!-- Create the time stamp -->
@@ -42,9 +67,191 @@
 		</jar>
 	</target>
 
+	<!-- ================================================================
+	     Test automation, coverage (JaCoCo) and mutation testing (PIT)
+	     ================================================================ -->
+
+	<!-- Download the test tooling from Maven Central once. skipexisting
+	     keeps later builds offline-friendly. -->
+	<target name="resolve" description="download JUnit and PIT libraries (JaCoCo is in tools/jacoco)">
+		<mkdir dir="${lib.test}" />
+		<get dest="${lib.test}" skipexisting="true" usetimestamp="false">
+			<url url="${maven.central}/junit/junit/${junit.version}/junit-${junit.version}.jar" />
+			<url url="${maven.central}/org/hamcrest/hamcrest-core/${hamcrest.version}/hamcrest-core-${hamcrest.version}.jar" />
+			<url url="${maven.central}/org/pitest/pitest/${pitest.version}/pitest-${pitest.version}.jar" />
+			<url url="${maven.central}/org/pitest/pitest-entry/${pitest.version}/pitest-entry-${pitest.version}.jar" />
+			<url url="${maven.central}/org/pitest/pitest-ant/${pitest.version}/pitest-ant-${pitest.version}.jar" />
+			<url url="${maven.central}/org/apache/commons/commons-text/${commons-text.version}/commons-text-${commons-text.version}.jar" />
+			<url url="${maven.central}/org/apache/commons/commons-lang3/${commons-lang3.version}/commons-lang3-${commons-lang3.version}.jar" />
+		</get>
+	</target>
+
+	<!-- classpath for compiling and running the tests (no PIT/JaCoCo here) -->
+	<path id="test.path">
+		<pathelement location="${build}" />
+		<pathelement location="${test.build}" />
+		<fileset dir="lib" includes="**/*.jar" />
+		<pathelement location="${lib.test}/junit-${junit.version}.jar" />
+		<pathelement location="${lib.test}/hamcrest-core-${hamcrest.version}.jar" />
+	</path>
+
+	<!-- classpath for PIT itself -->
+	<path id="pitest.path">
+		<pathelement location="${lib.test}/pitest-${pitest.version}.jar" />
+		<pathelement location="${lib.test}/pitest-entry-${pitest.version}.jar" />
+		<pathelement location="${lib.test}/pitest-ant-${pitest.version}.jar" />
+		<pathelement location="${lib.test}/commons-text-${commons-text.version}.jar" />
+		<pathelement location="${lib.test}/commons-lang3-${commons-lang3.version}.jar" />
+	</path>
+
+	<target name="compile-tests" depends="compile, resolve" description="compile the unit tests">
+		<mkdir dir="${test.build}" />
+		<javac srcdir="${test.src}" destdir="${test.build}" includeantruntime="false" release="17" debug="true" encoding="UTF-8">
+			<classpath refid="test.path" />
+		</javac>
+	</target>
+
+	<!-- JaCoCo: official JaCoCo distribution (jacoco-0.8.16.zip from jacoco.org /
+	     Maven Central), lib/ copied to tools/jacoco/lib. It is committed to
+	     the repository so it is also available inside the Jenkins container. -->
+	<property name="jacoco.lib" location="tools/jacoco/lib" />
+	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+		<classpath>
+			<pathelement location="${jacoco.lib}/jacocoant.jar" />
+		</classpath>
+	</taskdef>
+
+	<!-- which tests run and where the results go; "coverageReportPseudo"
+	     overrides these to measure the pseudo-tests on their own -->
+	<property name="test.includes" value="**/*Test.java" />
+	<property name="test.excludes" value="**/*PseudoTest.java" />
+	<property name="junit.dir" location="${reports}/junit" />
+	<property name="jacoco.dir" location="${reports}/jacoco" />
+
+	<!-- Runs the JUnit suite. The forked test JVM is instrumented by
+	     JaCoCo, which writes the execution data to jacoco.exec. -->
+	<target name="test" depends="compile-tests" description="run the unit tests (with JaCoCo instrumentation)">
+		<delete dir="${junit.dir}" />
+		<mkdir dir="${junit.dir}" />
+		<mkdir dir="${jacoco.dir}" />
+
+		<jacoco:coverage destfile="${jacoco.dir}/jacoco.exec" append="false">
+			<junit fork="true" forkmode="once" printsummary="yes" failureproperty="tests.failed" dir="${basedir}">
+				<classpath refid="test.path" />
+				<!-- the code under test touches Swing models; no display in CI -->
+				<sysproperty key="java.awt.headless" value="true" />
+				<formatter type="xml" />
+				<formatter type="brief" usefile="false" />
+				<batchtest todir="${junit.dir}">
+					<!-- pseudo-tests are excluded: they are a separate experiment -->
+					<fileset dir="${test.src}" includes="${test.includes}" excludes="${test.excludes}" />
+				</batchtest>
+			</junit>
+		</jacoco:coverage>
+
+		<!-- when called through coverageReport the failure is raised after
+		     the report is written, so CI can still show the coverage -->
+		<fail if="tests.failed" unless="defer.test.failure" message="Unit tests failed - see ${junit.dir}" />
+	</target>
+
+	<target name="-defer-test-failure">
+		<property name="defer.test.failure" value="true" />
+	</target>
+
+	<!-- Turns jacoco.exec into HTML / XML / CSV reports. -->
+	<target name="coverageReport" depends="-defer-test-failure, test" description="run the tests and generate the JaCoCo coverage report">
+		<jacoco:report>
+			<executiondata>
+				<file file="${jacoco.dir}/jacoco.exec" />
+			</executiondata>
+			<structure name="ReviewOger">
+				<classfiles>
+					<!-- production classes only (tests are in build-test/) -->
+					<fileset dir="${build}" />
+				</classfiles>
+				<sourcefiles encoding="UTF-8">
+					<fileset dir="${src}" />
+				</sourcefiles>
+			</structure>
+			<html destdir="${jacoco.dir}/html" />
+			<xml destfile="${jacoco.dir}/report.xml" />
+			<csv destfile="${jacoco.dir}/report.csv" />
+		</jacoco:report>
+
+		<fail if="tests.failed" message="Unit tests failed - see ${junit.dir}" />
+	</target>
+
+	<target name="coverage" depends="coverageReport" description="alias for coverageReport" />
+
+	<!-- Pseudo-test experiment: the same JaCoCo report, but produced only by
+	     the assertion-free pseudo-tests in test/pseudo. -->
+	<target name="coverageReportPseudo" depends="compile-tests" description="JaCoCo report for the pseudo-tests only">
+		<antcall target="coverageReport">
+			<param name="test.includes" value="**/*PseudoTest.java" />
+			<param name="test.excludes" value="" />
+			<param name="junit.dir" value="${reports}/junit-pseudo" />
+			<param name="jacoco.dir" value="${reports}/jacoco-pseudo" />
+		</antcall>
+	</target>
+
+	<!-- Mutation testing: PIT mutates the production classes and reruns
+	     the test suite against every mutant. -->
+	<target name="pit" depends="compile-tests" description="run mutation testing with PIT">
+		<taskdef name="pitest" classname="org.pitest.ant.PitestTask" classpathref="pitest.path" />
+
+		<path id="mutation.path">
+			<path refid="pitest.path" />
+			<path refid="test.path" />
+		</path>
+
+		<delete dir="${reports}/pit" />
+		<pitest pitClasspath="pitest.path"
+		        classPath="mutation.path"
+		        targetClasses="${pit.targetClasses}"
+		        targetTests="${pit.targetTests}"
+		        excludedTestClasses="*PseudoTest"
+		        excludedClasses="gui.*,main.*,*Test,testutil.*"
+		        reportDir="${reports}/pit"
+		        sourceDir="${src}"
+		        outputFormats="HTML,XML"
+		        timestampedReports="false"
+		        threads="2"
+		        jvmArgs="-Djava.awt.headless=true"
+		        timeoutConst="8000"
+		        verbose="false" />
+	</target>
+
+	<!-- Runs PIT with ONLY the assertion-free pseudo-tests
+	     (test/pseudo/*PseudoTest.java). They reach high line coverage but
+	     kill almost no mutants - compare reports/pit-pseudo with reports/pit. -->
+	<target name="pit-pseudo" depends="compile-tests" description="mutation testing with the pseudo-tests only">
+		<taskdef name="pitest" classname="org.pitest.ant.PitestTask" classpathref="pitest.path" />
+
+		<path id="mutation.pseudo.path">
+			<path refid="pitest.path" />
+			<path refid="test.path" />
+		</path>
+
+		<delete dir="${reports}/pit-pseudo" />
+		<pitest pitClasspath="pitest.path"
+		        classPath="mutation.pseudo.path"
+		        targetClasses="${pit.targetClasses}"
+		        targetTests="*PseudoTest"
+		        excludedClasses="gui.*,main.*,*Test,testutil.*"
+		        reportDir="${reports}/pit-pseudo"
+		        sourceDir="${src}"
+		        outputFormats="HTML,XML"
+		        timestampedReports="false"
+		        threads="2"
+		        jvmArgs="-Djava.awt.headless=true"
+		        timeoutConst="8000"
+		        verbose="false" />
+	</target>
+
 	<target name="clean" description="clean up">
 		<!-- Delete the ${build} and ${dist} directory trees -->
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
+		<delete dir="${test.build}" />
 	</target>
 </project>

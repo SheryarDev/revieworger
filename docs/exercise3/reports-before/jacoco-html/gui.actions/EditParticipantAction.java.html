@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EditParticipantAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">gui.actions</a> &gt; <span class="el_source">EditParticipantAction.java</span></div><h1>EditParticipantAction.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package gui.actions;
+
+import gui.Gui;
+
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+
+import main.Main;
+import data.Participant;
+import data.ParticipantTableModel;
+
+/**
+ * This class implements an abstract action that is called when a participant
+ * should be edited
+ */
+public class EditParticipantAction extends AbstractAction {
+
+	private JFrame parent;
+
+<span class="nc" id="L40">	public EditParticipantAction(JFrame parent) {</span>
+<span class="nc" id="L41">		this.parent = parent;</span>
+<span class="nc" id="L42">	}</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3746794815943075198L;
+
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
+<span class="nc" id="L51">		ParticipantTableModel model = ParticipantTableModel.getInstance();</span>
+<span class="nc" id="L52">		int[] rows = Gui.getselectedParticipantRows();</span>
+
+<span class="nc bnc" id="L54" title="All 2 branches missed.">		if (rows.length &gt; 1) {</span>
+<span class="nc" id="L55">			JOptionPane.showMessageDialog(null, &quot;Es kann nur ein Teilnehmer gleichzeitig geändert werden&quot;);</span>
+		} else {
+
+<span class="nc" id="L58">			final Participant selectedParticipant = model.getParticipantAt(rows[0]);</span>
+
+<span class="nc" id="L60">			final JFrame participantFrame = new JFrame();</span>
+<span class="nc" id="L61">			participantFrame.setLayout(new GridLayout(2, 1));</span>
+<span class="nc" id="L62">			participantFrame.setTitle(&quot;Neuer Teilnehmer&quot;);</span>
+<span class="nc" id="L63">			Dimension minimumSize = new Dimension(250, 200);</span>
+<span class="nc" id="L64">			participantFrame.setMinimumSize(minimumSize);</span>
+
+<span class="nc" id="L66">			JPanel inputPane = new JPanel();</span>
+<span class="nc" id="L67">			inputPane.setLayout(new GridLayout(4, 2));</span>
+<span class="nc" id="L68">			participantFrame.add(inputPane);</span>
+
+<span class="nc" id="L70">			JLabel firstNameLabel = new JLabel(&quot;Vorname:&quot;);</span>
+<span class="nc" id="L71">			inputPane.add(firstNameLabel);</span>
+
+<span class="nc" id="L73">			final JTextField firstNameField = new JTextField();</span>
+<span class="nc" id="L74">			firstNameField.setText(selectedParticipant.getFirstName());</span>
+<span class="nc" id="L75">			inputPane.add(firstNameField);</span>
+
+<span class="nc" id="L77">			JLabel lastNameLabel = new JLabel(&quot;Nachname:&quot;);</span>
+<span class="nc" id="L78">			inputPane.add(lastNameLabel);</span>
+
+<span class="nc" id="L80">			final JTextField lastNameField = new JTextField();</span>
+<span class="nc" id="L81">			lastNameField.setText(selectedParticipant.getLastName());</span>
+<span class="nc" id="L82">			inputPane.add(lastNameField);</span>
+
+<span class="nc" id="L84">			JLabel emailLabel = new JLabel(&quot;E-Mail:&quot;);</span>
+<span class="nc" id="L85">			inputPane.add(emailLabel);</span>
+
+<span class="nc" id="L87">			final JTextField emailField = new JTextField();</span>
+<span class="nc" id="L88">			emailField.setText(selectedParticipant.geteMailAdress());</span>
+<span class="nc" id="L89">			inputPane.add(emailField);</span>
+
+<span class="nc" id="L91">			JLabel groupLabel = new JLabel(&quot;Gruppe&quot;);</span>
+<span class="nc" id="L92">			inputPane.add(groupLabel);</span>
+
+<span class="nc" id="L94">			final JTextField groupField = new JTextField();</span>
+<span class="nc" id="L95">			groupField.setText(selectedParticipant.getGroupNumber());</span>
+<span class="nc" id="L96">			inputPane.add(groupField);</span>
+
+<span class="nc" id="L98">			JButton doneButton = new JButton(&quot;OK&quot;);</span>
+<span class="nc" id="L99">			participantFrame.add(doneButton);</span>
+
+<span class="nc" id="L101">			doneButton.addActionListener(new ActionListener() {</span>
+
+				public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L104">					String firstName = firstNameField.getText();</span>
+<span class="nc" id="L105">					String lastName = lastNameField.getText();</span>
+<span class="nc" id="L106">					String email = emailField.getText();</span>
+<span class="nc" id="L107">					String group = groupField.getText();</span>
+
+<span class="nc" id="L109">					selectedParticipant.setFirstName(firstName);</span>
+<span class="nc" id="L110">					selectedParticipant.setLastName(lastName);</span>
+<span class="nc" id="L111">					selectedParticipant.seteMailAdress(email);</span>
+<span class="nc" id="L112">					selectedParticipant.setGroupNumber(group);</span>
+<span class="nc" id="L113">					ParticipantTableModel model = ParticipantTableModel.getInstance();</span>
+<span class="nc" id="L114">					model.fireTableDataChanged();</span>
+<span class="nc" id="L115">					Main.setSaved(false);</span>
+<span class="nc" id="L116">					participantFrame.dispose();</span>
+
+<span class="nc" id="L118">				}</span>
+
+			});
+
+<span class="nc" id="L122">			participantFrame.setLocationRelativeTo(parent);</span>
+<span class="nc" id="L123">			participantFrame.setVisible(true);</span>
+<span class="nc" id="L124">			participantFrame.pack();</span>
+		}
+<span class="nc" id="L126">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

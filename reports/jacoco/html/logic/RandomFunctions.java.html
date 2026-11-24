@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RandomFunctions.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">logic</a> &gt; <span class="el_source">RandomFunctions.java</span></div><h1>RandomFunctions.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package logic;
+
+import java.util.List;
+import java.util.Random;
+
+import data.Participant;
+import data.Review;
+import data.ReviewPlan;
+
+/**
+ * This class provides functions for the random selection of participants and
+ * the random shuffeling of the current review plan
+ */
+<span class="nc" id="L24">public class RandomFunctions {</span>
+
+	/**
+	 * This function randomly selects a participant from the given pool and
+	 * returns it.
+	 * 
+	 * @param pool
+	 *            The pool with the participants
+	 * @return A randomly selected participant
+	 */
+	public static Participant selectReviewerFromPool(Pool pool) {
+<span class="fc" id="L35">		Random random = new Random();</span>
+		// get a random index between 0 and the current pool size -1
+<span class="fc" id="L37">		int randomIndex = random.nextInt(pool.getCurrentReviewerPoolsize());</span>
+<span class="fc" id="L38">		Participant reviewer = pool.getReviewers().get(randomIndex);</span>
+<span class="fc" id="L39">		pool.removeParticipant(reviewer);</span>
+<span class="fc" id="L40">		return reviewer;</span>
+	}
+
+	/**
+	 * This function randomly selects a moderator from the given pool and
+	 * returns it.
+	 * 
+	 * @param pool
+	 *            The pool with the moderators
+	 * @return A randomly selected moderator
+	 */
+	public static Participant selectModeratorFromPool(Pool pool) {
+<span class="fc" id="L52">		Random random = new Random();</span>
+		// get a random index between 0 and the current pool size -1
+<span class="fc" id="L54">		int randomIndex = random.nextInt(pool.getCurrentModeratorPoolsize());</span>
+<span class="fc" id="L55">		return pool.getModerators().get(randomIndex);</span>
+	}
+
+	/**
+	 * This function must be called if the current order of reviews has no
+	 * solution. The function shuffles the reviews randomly.
+	 * 
+	 * @param notWorkingReviewPlan
+	 *            The current list of reviews
+	 * @return A shuffled list of reviews
+	 */
+	public static void shuffleReviews(ReviewPlan notWorkingReviewPlan) {
+<span class="fc" id="L67">		List&lt;Review&gt; reviews = notWorkingReviewPlan.getReviews();</span>
+
+<span class="fc" id="L69">		int n = reviews.size();</span>
+<span class="fc" id="L70">		Random random = new Random();</span>
+<span class="fc" id="L71">		random.nextInt();</span>
+
+<span class="fc" id="L73">		notWorkingReviewPlan.getTempReviews().clear();</span>
+
+		// select randomly one review from the left reviews and add it to a new
+		// list
+<span class="fc bfc" id="L77" title="All 2 branches covered.">		for (int i = n; i &gt; 0; i--) {</span>
+
+			// remove() instead of get(): draw without replacement, so every
+			// review ends up in the temp list exactly once
+<span class="fc" id="L81">			Review currentReview = reviews.remove(random.nextInt(i));</span>
+<span class="fc" id="L82">			currentReview.setAssignedRoom(null);</span>
+<span class="fc" id="L83">			currentReview.setModerator(null);</span>
+<span class="fc" id="L84">			currentReview.setScribe(null);</span>
+<span class="fc" id="L85">			currentReview.getReviewers().clear();</span>
+<span class="fc" id="L86">			notWorkingReviewPlan.addTemp(currentReview);</span>
+		}
+
+
+<span class="fc" id="L90">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

@@ -8,6 +8,8 @@ pipeline {
 
     environment {
         SPOTBUGS_HOME = '/opt/spotbugs-4.10.2'
+        // SpotBugs (ex. 2) + JUnit/JaCoCo/PIT (ex. 3) reports
+        REPORT_ARTIFACTS = 'reports/spotbugs.xml, reports/spotbugs.html, reports/junit/*.xml, reports/jacoco/**, reports/jacoco-pseudo/**, reports/pit/**, reports/pit-pseudo/**'
     }
 
     stages {
@@ -15,15 +17,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                script {
-                    // Stop the build loop: the report commit pushed by this
-                    // pipeline would otherwise trigger another build.
-                    def lastMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
-                    if (lastMsg.contains('[skip ci]')) {
-                        currentBuild.result = 'NOT_BUILT'
-                        error('Last commit is an automated report commit - skipping build.')
-                    }
-                }
             }
         }
 
@@ -66,47 +59,43 @@ pipeline {
             }
         }
 
-        stage('Archive Results') {
+        stage('Unit Tests & Coverage') {
             steps {
-                archiveArtifacts artifacts: 'reports/spotbugs.xml, reports/spotbugs.html',
-                                 allowEmptyArchive: false
+                // Runs the JUnit suite with the JaCoCo agent attached.
+                // JaCoCo comes from tools/jacoco/lib (in the repo); the first run
+                // downloads JUnit/PIT into lib-test/, which 'ant clean' keeps.
+                sh 'ant coverageReport'
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'reports/junit/TEST-*.xml'
+                }
             }
         }
 
-        stage('Push Reports to GitHub') {
+        stage('Mutation Testing') {
             steps {
-                // 'GITHUB_TOKEN' = Jenkins credential of kind "Secret text"
-                // (Manage Jenkins -> Credentials). Exposed here as $GITHUB_TOKEN.
-                withCredentials([string(credentialsId: 'GITHUB_TOKEN',
-                                        variable: 'GITHUB_TOKEN')]) {
-                    sh '''
-                        set +x
-                        git config user.name "Jenkins CI"
-                        git config user.email "jenkins@localhost"
+                // PIT mutates data.*, logic.*, io.FileProcessor and
+                // io.TableOutputter and reruns the test suite on each mutant.
+                sh 'ant pit'
+                // same mutants, but only the assertion-free pseudo-tests:
+                // high line coverage, very low mutation score
+                sh 'ant pit-pseudo'
+                // JaCoCo report of the pseudo-tests alone (coverage looks fine...)
+                sh 'ant coverageReportPseudo'
+            }
+        }
 
-                        REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/SheryarDev/revieworger.git"
-
-                        # Commit only the reports; build/ and dist/ changes stay local.
-                        git add -f reports/spotbugs.xml reports/spotbugs.html
-
-                        if git diff --cached --quiet; then
-                            echo "Reports unchanged - nothing to push."
-                            exit 0
-                        fi
-
-                        git commit -m "Update SpotBugs reports (build #${BUILD_NUMBER}) [skip ci]"
-                        git pull --rebase --autostash "$REPO_URL" main
-                        git push "$REPO_URL" HEAD:main
-                    '''
-                }
+        stage('Archive Results') {
+            steps {
+                archiveArtifacts artifacts: env.REPORT_ARTIFACTS, allowEmptyArchive: false
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'reports/spotbugs.xml, reports/spotbugs.html',
-                             allowEmptyArchive: true
+            archiveArtifacts artifacts: env.REPORT_ARTIFACTS, allowEmptyArchive: true
         }
     }
 }

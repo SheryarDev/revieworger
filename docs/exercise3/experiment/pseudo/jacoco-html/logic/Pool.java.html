@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Pool.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">logic</a> &gt; <span class="el_source">Pool.java</span></div><h1>Pool.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package logic;
+
+import java.util.ArrayList;
+import java.util.Date;
+import data.Participant;
+import data.ParticipantTableModel;
+import data.Review;
+import data.Room;
+import data.Slot;
+
+/**
+ * This class represents one pool for a review. A pool holds all participants
+ * which can be added to a review. These participants have no other review in
+ * the same time slot, have not the same group as the author of the review and
+ * have not participated in the maximum amount of reviews for each participabt.
+ */
+public class Pool {
+
+<span class="nc" id="L29">	static ArrayList&lt;Participant&gt; reviewerList = new ArrayList&lt;Participant&gt;();</span>
+<span class="nc" id="L30">	static ArrayList&lt;Participant&gt; moderatorList = new ArrayList&lt;Participant&gt;();</span>
+	Slot slot;
+
+<span class="nc" id="L33">	public Pool(Slot currentSlot) {</span>
+<span class="nc" id="L34">		slot = currentSlot;</span>
+<span class="nc" id="L35">	}</span>
+
+	/**
+	 * Generates a pool of possible participants for the given review
+	 * 
+	 * @param review
+	 *            The review the pool is generated for
+	 * @return True if enough participants for all free positions are found,
+	 *         else false
+	 */
+	public ArrayList&lt;Participant&gt; generatePoolForReviewers(Review review) {
+
+<span class="nc" id="L47">		reviewerList.clear();</span>
+
+<span class="nc bnc" id="L49" title="All 2 branches missed.">		for (Participant p : ParticipantTableModel.getInstance()</span>
+<span class="nc" id="L50">				.getParticipants()) {</span>
+			// must not be the same group as the author and not too many
+			// reviews and not in review yet
+<span class="nc bnc" id="L53" title="All 2 branches missed.">			if (!p.getGroupNumber().equals(review.getAuthor().getGroupNumber())</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">					&amp;&amp; (p.getNumberOfReviews() &lt; 2)</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">					&amp;&amp; !ParticipantInReview(review, p)</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">					&amp;&amp; !ParticipantInSlot(p, slot)</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">					&amp;&amp; !overLappingTime(review, p)) {</span>
+<span class="nc" id="L58">				reviewerList.add(p);</span>
+			}
+<span class="nc" id="L60">		}</span>
+
+<span class="nc" id="L62">		return reviewerList;</span>
+	}
+
+	/**
+	 * @param review
+	 * @param participant
+	 * @return true if participant already added
+	 */
+	private boolean ParticipantInReview(Review review, Participant participant) {
+<span class="nc bnc" id="L71" title="All 2 branches missed.">		if (review.getAuthor() != null) {</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">			if (review.getAuthor() == participant) {</span>
+<span class="nc" id="L73">				return true;</span>
+			}
+		}
+<span class="nc bnc" id="L76" title="All 2 branches missed.">		if (review.getModerator() != null) {</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">			if (review.getModerator() == participant) {</span>
+<span class="nc" id="L78">				return true;</span>
+			}
+		}
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">		if (review.getScribe() != null) {</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">			if (review.getScribe() == participant) {</span>
+<span class="nc" id="L84">				return true;</span>
+			}
+		}
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">		if (review.getReviewers().size() &gt; 0) {</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			if (review.getReviewers().contains(participant)) {</span>
+<span class="nc" id="L90">				return true;</span>
+			}
+		}
+<span class="nc" id="L93">		return false;</span>
+	}
+
+	/**
+	 * @param review
+	 * @param participant
+	 * @return true if participant already in slot and therefore at the same
+	 *         time
+	 */
+	public static boolean ParticipantInSlot(Participant participant, Slot slot) {
+<span class="nc bnc" id="L103" title="All 2 branches missed.">		for (Room r : slot.getRooms()) {</span>
+<span class="nc" id="L104">			Review review = r.getReview();</span>
+
+			// empty room, check the remaining rooms of the slot
+<span class="nc bnc" id="L107" title="All 2 branches missed.">			if (review == null) {</span>
+<span class="nc" id="L108">				continue;</span>
+			}
+
+<span class="nc bnc" id="L111" title="All 2 branches missed.">			if (review.getAuthor() != null) {</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">				if (review.getAuthor() == participant) {</span>
+<span class="nc" id="L113">					return true;</span>
+				}
+			}
+<span class="nc bnc" id="L116" title="All 2 branches missed.">			if (review.getModerator() != null) {</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">				if (review.getModerator() == participant) {</span>
+<span class="nc" id="L118">					return true;</span>
+				}
+			}
+
+<span class="nc bnc" id="L122" title="All 2 branches missed.">			if (review.getScribe() != null) {</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">				if (review.getScribe() == participant) {</span>
+<span class="nc" id="L124">					return true;</span>
+				}
+			}
+
+<span class="nc bnc" id="L128" title="All 2 branches missed.">			if (review.getReviewers().size() &gt; 0) {</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">				if (review.getReviewers().contains(participant)) {</span>
+<span class="nc" id="L130">					return true;</span>
+				}
+			}
+<span class="nc" id="L133">		}</span>
+
+<span class="nc" id="L135">		return false;</span>
+	}
+
+	/**
+	 * @param currentReview
+	 *            the current review
+	 * @param participant
+	 *            the current participant
+	 * @return true if one of the existing reviews of the participant overlaps
+	 *         with the current review
+	 */
+	private boolean overLappingTime(Review currentReview,
+			Participant participant) {
+
+<span class="nc bnc" id="L149" title="All 2 branches missed.">		for (Review r : participant.getReviews()) {</span>
+<span class="nc" id="L150">			Room room = r.getAssignedRoom();</span>
+
+			// it is possible, that the participant i san author which has no
+			// room yet. This will be checked when the room ist set
+<span class="nc bnc" id="L154" title="All 2 branches missed.">			if (room != null) {</span>
+
+<span class="nc" id="L156">				Date testBegin = r.getAssignedRoom().getBeginTime();</span>
+<span class="nc" id="L157">				Date testEnd = r.getAssignedRoom().getEndTime();</span>
+<span class="nc" id="L158">				Date currentBegin = currentReview.getAssignedRoom()</span>
+<span class="nc" id="L159">						.getBeginTime();</span>
+<span class="nc" id="L160">				Date currentEnd = currentReview.getAssignedRoom().getEndTime();</span>
+
+<span class="nc bnc" id="L162" title="All 2 branches missed.">				if (currentBegin.after(testBegin)</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">						&amp;&amp; currentBegin.before(testEnd)) {</span>
+<span class="nc" id="L164">					return true;</span>
+				}
+<span class="nc bnc" id="L166" title="All 4 branches missed.">				if (currentEnd.before(testEnd) &amp;&amp; currentEnd.after(testBegin)) {</span>
+<span class="nc" id="L167">					return true;</span>
+
+				}
+			}
+<span class="nc" id="L171">		}</span>
+<span class="nc" id="L172">		return false;</span>
+	}
+
+	/**
+	 * @param review
+	 *            the current review to fill
+	 * @param moderatorNotReviewerGroup
+	 * @param reviewers
+	 *            the added reviewers in the review
+	 * @return
+	 */
+	public ArrayList&lt;Participant&gt; generatePoolForModerator(Review review,
+			boolean moderatorNotReviewerGroup, ArrayList&lt;Participant&gt; reviewers) {
+<span class="nc" id="L185">		moderatorList.clear();</span>
+
+<span class="nc bnc" id="L187" title="All 2 branches missed.">		if (moderatorNotReviewerGroup) {</span>
+
+<span class="nc bnc" id="L189" title="All 2 branches missed.">			for (Participant participantToAdd : ParticipantTableModel</span>
+<span class="nc" id="L190">					.getInstance().getParticipants()) {</span>
+				// must not be the same group as the author and not too many
+				// reviews and not already in review
+<span class="nc bnc" id="L193" title="All 2 branches missed.">				if (!participantToAdd.getGroupNumber().equals(review.getAuthor()</span>
+<span class="nc" id="L194">						.getGroupNumber())</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">						&amp;&amp; (participantToAdd.getNumberOfReviews() &lt; 2)</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">						&amp;&amp; !ParticipantInReview(review, participantToAdd)</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">						&amp;&amp; !ParticipantInSlot(participantToAdd, slot)</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">						&amp;&amp; !overLappingTime(review, participantToAdd)) {</span>
+
+					// check for the existing reviewers if in same group
+<span class="nc" id="L201">					boolean match = false;</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">					for (Participant reviewer : reviewers) {</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">						if (reviewer.getGroupNumber().equals(participantToAdd</span>
+<span class="nc" id="L204">								.getGroupNumber())) {</span>
+<span class="nc" id="L205">							match = true;</span>
+
+						}
+
+<span class="nc" id="L209">					}</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">					if (!match) {</span>
+<span class="nc" id="L211">						moderatorList.add(participantToAdd);</span>
+					}
+
+				}
+
+<span class="nc" id="L216">			}</span>
+			// moderator and reviewers may be in same group
+		} else {
+<span class="nc bnc" id="L219" title="All 2 branches missed.">			for (Participant p : ParticipantTableModel.getInstance()</span>
+<span class="nc" id="L220">					.getParticipants()) {</span>
+				// must not be the same group as the author and not too many
+				// reviews
+<span class="nc bnc" id="L223" title="All 2 branches missed.">				if (!p.getGroupNumber().equals(review.getAuthor().getGroupNumber())</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">						&amp;&amp; (p.getNumberOfReviews() &lt; 2)</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">						&amp;&amp; !ParticipantInReview(review, p)</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">						&amp;&amp; !ParticipantInSlot(p, slot)</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">						&amp;&amp; !overLappingTime(review, p)) {</span>
+<span class="nc" id="L228">					moderatorList.add(p);</span>
+				}
+<span class="nc" id="L230">			}</span>
+		}
+
+<span class="nc" id="L233">		return moderatorList;</span>
+	}
+
+	/**
+	 * Removes the given participant from the pool
+	 * 
+	 * @param participantToRemove
+	 *            The participant which should be removed from the pool
+	 */
+	protected void removeParticipant(Participant participantToRemove) {
+<span class="nc" id="L243">		reviewerList.remove(participantToRemove);</span>
+<span class="nc" id="L244">	}</span>
+
+	/**
+	 * @return the current size of the pool
+	 */
+	protected int getCurrentReviewerPoolsize() {
+<span class="nc" id="L250">		return reviewerList.size();</span>
+	}
+
+	/**
+	 * @return The participants of the pool
+	 */
+	protected ArrayList&lt;Participant&gt; getReviewers() {
+<span class="nc" id="L257">		return reviewerList;</span>
+	}
+
+	/**
+	 * @return the current size of the moderator pool
+	 */
+	protected int getCurrentModeratorPoolsize() {
+<span class="nc" id="L264">		return moderatorList.size();</span>
+	}
+
+	/**
+	 * @return The moderators of the pool
+	 */
+	protected ArrayList&lt;Participant&gt; getModerators() {
+<span class="nc" id="L271">		return moderatorList;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

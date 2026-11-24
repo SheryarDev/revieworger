@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReviewPlan.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">data</a> &gt; <span class="el_source">ReviewPlan.java</span></div><h1>ReviewPlan.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package data;
+
+import java.util.ArrayList;
+
+/**
+ * This class contains the results after a successful run of Oger. It contains
+ * all informations needed to start the matching. Is filled while the data is
+ * read by io. A singleton
+ */
+public class ReviewPlan {
+
+	// singleton
+<span class="fc" id="L23">	private static ReviewPlan instance = null;</span>
+
+<span class="fc" id="L25">	private ReviewPlan() {</span>
+
+<span class="fc" id="L27">	}</span>
+
+	public static ReviewPlan getInstance() {
+<span class="fc bfc" id="L30" title="All 2 branches covered.">		if (instance == null) {</span>
+<span class="fc" id="L31">			instance = new ReviewPlan();</span>
+		}
+<span class="fc" id="L33">		return instance;</span>
+	}
+
+	// the final reviews
+<span class="fc" id="L37">	private ArrayList&lt;Review&gt; reviews = new ArrayList&lt;Review&gt;();</span>
+
+	// a list of temporary reviews which can be edited without information loss
+<span class="fc" id="L40">	private ArrayList&lt;Review&gt; tempReviews = new ArrayList&lt;Review&gt;();</span>
+
+	public void add(Review review) {
+<span class="nc" id="L43">		reviews.add(review);</span>
+<span class="nc" id="L44">	}</span>
+
+	public ArrayList&lt;Review&gt; getReviews() {
+<span class="nc" id="L47">		return reviews;</span>
+	}
+
+	public void addTemp(Review review) {
+<span class="nc" id="L51">		tempReviews.add(review);</span>
+<span class="nc" id="L52">	}</span>
+
+	public ArrayList&lt;Review&gt; getTempReviews() {
+<span class="nc" id="L55">		return tempReviews;</span>
+	}
+
+	public void resetLists() {
+<span class="fc" id="L59">		reviews.clear();</span>
+<span class="fc" id="L60">		tempReviews.clear();</span>
+<span class="fc" id="L61">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

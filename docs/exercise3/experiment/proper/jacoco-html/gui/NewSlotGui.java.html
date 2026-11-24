@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NewSlotGui.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">gui</a> &gt; <span class="el_source">NewSlotGui.java</span></div><h1>NewSlotGui.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package gui;
+
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.tree.DefaultMutableTreeNode;
+
+import main.Main;
+import data.RoomTreeModel;
+import data.Slot;
+import data.SlotNode;
+
+/**
+ * This class shows a dialog in which the user can enter the date and time for a
+ * slot
+ */
+<span class="nc" id="L38">public class NewSlotGui {</span>
+	
+
+	/**
+	 * This method shows a dialog for the slot data and generates a new slot.
+	 */
+	public static void addSlot(JFrame parent) {
+
+<span class="nc" id="L46">		final JFrame slotFrame = new JFrame();</span>
+
+<span class="nc" id="L48">		final DateFormat dateFormat = new SimpleDateFormat(&quot;dd.MM.yy&quot;);</span>
+<span class="nc" id="L49">		final DateFormat timeFormat = new SimpleDateFormat(&quot;HH:mm&quot;);</span>
+
+<span class="nc" id="L51">		slotFrame.setLayout(new GridLayout(4, 2));</span>
+<span class="nc" id="L52">		slotFrame.setTitle(&quot;Neuer Slot&quot;);</span>
+<span class="nc" id="L53">		Dimension minimumSize = new Dimension(250, 200);</span>
+<span class="nc" id="L54">		slotFrame.setMinimumSize(minimumSize);</span>
+
+<span class="nc" id="L56">		JLabel dateLabel = new JLabel(&quot;Datum:&quot;);</span>
+<span class="nc" id="L57">		slotFrame.add(dateLabel);</span>
+
+<span class="nc" id="L59">		final JTextField dateField = new JTextField();</span>
+<span class="nc" id="L60">		slotFrame.add(dateField);</span>
+
+<span class="nc" id="L62">		JLabel beginLabel = new JLabel(&quot;Beginn:&quot;);</span>
+<span class="nc" id="L63">		slotFrame.add(beginLabel);</span>
+
+<span class="nc" id="L65">		final JTextField beginField = new JTextField();</span>
+<span class="nc" id="L66">		slotFrame.add(beginField);</span>
+
+<span class="nc" id="L68">		JLabel endLabel = new JLabel(&quot;Ende:&quot;);</span>
+<span class="nc" id="L69">		slotFrame.add(endLabel);</span>
+
+<span class="nc" id="L71">		final JTextField endField = new JTextField();</span>
+<span class="nc" id="L72">		slotFrame.add(endField);</span>
+
+<span class="nc" id="L74">		JButton doneButton = new JButton(&quot;OK&quot;);</span>
+<span class="nc" id="L75">		doneButton.addActionListener(new AbstractAction() {</span>
+
+			private static final long serialVersionUID = 2483720398415164553L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+
+<span class="nc" id="L82">				boolean parseFailed = false;</span>
+
+<span class="nc" id="L84">				Date date = null;</span>
+<span class="nc" id="L85">				Date beginTime = null;</span>
+<span class="nc" id="L86">				Date endTime = null;</span>
+
+				try {
+<span class="nc" id="L89">					date = dateFormat.parse(dateField.getText());</span>
+<span class="nc" id="L90">				} catch (ParseException e) {</span>
+<span class="nc" id="L91">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Das Datum muss die Form tt.mm.jj haben&quot;,
+							&quot;Datum nicht erkannt&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L94">					parseFailed = true;</span>
+<span class="nc" id="L95">				}</span>
+
+				try {
+<span class="nc" id="L98">					beginTime = timeFormat.parse(beginField.getText());</span>
+<span class="nc" id="L99">				} catch (ParseException e) {</span>
+<span class="nc" id="L100">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Angfangszeit muss die Form HH:mm haben&quot;,
+							&quot;Anfangszeit nicht erkannt&quot;,
+							JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L104">					parseFailed = true;</span>
+<span class="nc" id="L105">				}</span>
+
+				try {
+<span class="nc" id="L108">					endTime = timeFormat.parse(endField.getText());</span>
+<span class="nc" id="L109">				} catch (ParseException e) {</span>
+<span class="nc" id="L110">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Endzeit muss die Form HH:mm haben&quot;,
+							&quot;Endzeit nicht erkannt&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L113">					parseFailed = true;</span>
+<span class="nc" id="L114">				}</span>
+
+<span class="nc bnc" id="L116" title="All 2 branches missed.">				if (!parseFailed) {</span>
+<span class="nc" id="L117">					Slot slot = new Slot(date, beginTime, endTime);</span>
+<span class="nc" id="L118">					SlotNode newSlotNode = new SlotNode();</span>
+<span class="nc" id="L119">					newSlotNode.setUserObject(slot);</span>
+<span class="nc" id="L120">					((DefaultMutableTreeNode) RoomTreeModel.getInstance()</span>
+<span class="nc" id="L121">							.getRoot()).add(newSlotNode);</span>
+<span class="nc" id="L122">					Gui.getRoomTree().updateUI();</span>
+<span class="nc" id="L123">					Main.setSaved(false);</span>
+<span class="nc" id="L124">					slotFrame.dispose();</span>
+				}
+<span class="nc" id="L126">			}</span>
+
+		});
+<span class="nc" id="L129">		slotFrame.add(doneButton);</span>
+
+<span class="nc" id="L131">		slotFrame.setLocationRelativeTo(parent);</span>
+<span class="nc" id="L132">		slotFrame.setVisible(true);</span>
+<span class="nc" id="L133">		slotFrame.pack();</span>
+
+<span class="nc" id="L135">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>
