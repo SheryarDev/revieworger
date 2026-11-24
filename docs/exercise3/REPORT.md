@@ -270,8 +270,7 @@ exercises 1 and 2 and adds:
 |---|---|---|
 | Unit Tests & Coverage | `ant coverageReport` | JUnit results (published with the `junit` step), `reports/jacoco/**` |
 | Mutation Testing | `ant pit`, `ant pit-pseudo`, `ant coverageReportPseudo` | `reports/pit/**`, `reports/pit-pseudo/**`, `reports/jacoco-pseudo/**` |
-| Archive Results | `archiveArtifacts` | SpotBugs, JUnit, JaCoCo and PIT reports |
-| Push Reports to GitHub | `git push … [skip ci]` | the same reports committed to the repository |
+| Archive Results | `archiveArtifacts` | SpotBugs, JUnit, JaCoCo and PIT reports (downloadable from each build page) |
 
 JaCoCo comes from `tools/jacoco/lib` in the repository; JUnit and PIT are
 downloaded once by the `resolve` target into `lib-test/` in the Jenkins
