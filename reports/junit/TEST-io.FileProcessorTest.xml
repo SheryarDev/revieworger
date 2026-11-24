@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="0" failures="0" hostname="Muhammads-MacBook-Air.local" name="io.FileProcessorTest" skipped="0" tests="12" time="0.226" timestamp="2026-11-24T19:57:58">
+  <properties>
+    <property name="reports" value="/Users/shehryar/Desktop/revieworger/reports" />
+    <property name="ant.library.dir" value="/opt/homebrew/Cellar/ant/1.10.18/libexec/lib" />
+    <property name="test.includes" value="**/*Test.java" />
+    <property name="ant.file.type" value="file" />
+    <property name="java.specification.version" value="27" />
+    <property name="ant.project.name" value="ReviewOger" />
+    <property name="sun.jnu.encoding" value="UTF-8" />
+    <property name="dist" value="/Users/shehryar/Desktop/revieworger/dist" />
+    <property name="java.class.path" value="/Users/shehryar/Desktop/revieworger/build:/Users/shehryar/Desktop/revieworger/build-test:/Users/shehryar/Desktop/revieworger/lib/jdom-2.0.5.jar:/Users/shehryar/Desktop/revieworger/lib-test/junit-4.13.2.jar:/Users/shehryar/Desktop/revieworger/lib-test/hamcrest-core-1.3.jar:/opt/homebrew/Cellar/ant/1.10.18/libexec/lib/ant-launcher.jar:/opt/homebrew/Cellar/ant/1.10.18/libexec/lib/ant.jar:/opt/homebrew/Cellar/ant/1.10.18/libexec/lib/ant-junit.jar:/opt/homebrew/Cellar/ant/1.10.18/libexec/lib/ant-junit4.jar" />
+    <property name="java.vm.vendor" value="Homebrew" />
+    <property name="sun.arch.data.model" value="64" />
+    <property name="maven.central" value="https://repo1.maven.org/maven2" />
+    <property name="java.vendor.url" value="https://github.com/Homebrew/homebrew-core/issues" />
+    <property name="commons-lang3.version" value="3.18.0" />
+    <property name="os.name" value="Mac OS X" />
+    <property name="java.vm.specification.version" value="27" />
+    <property name="junit.version" value="4.13.2" />
+    <property name="test.src" value="/Users/shehryar/Desktop/revieworger/test" />
+    <property name="DSTAMP" value="20261124" />
+    <property name="sun.java.launcher" value="SUN_STANDARD" />
+    <property name="user.country" value="US" />
+    <property name="pitest.version" value="1.30.2" />
+    <property name="sun.boot.library.path" value="/opt/homebrew/Cellar/openjdk/27.0.1.0.3/libexec/openjdk.jdk/Contents/Home/lib" />
+    <property name="sun.java.command" value="org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner testsfile=/Users/shehryar/Desktop/revieworger/junittestcases14829556072633304420.properties skipNonTests=false filtertrace=true haltOnError=false haltOnFailure=false formatter=org.apache.tools.ant.taskdefs.optional.junit.SummaryJUnitResultFormatter showoutput=false outputtoformatters=true logfailedtests=true threadid=0 logtestlistenerevents=false formatter=org.apache.tools.ant.taskdefs.optional.junit.XMLJUnitResultFormatter,/Users/shehryar/Desktop/revieworger/reports/junit/IGNORETHIS.xml formatter=org.apache.tools.ant.taskdefs.optional.junit.BriefJUnitResultFormatter crashfile=/Users/shehryar/Desktop/revieworger/junitvmwatcher4937715993017908998.properties propsfile=/Users/shehryar/Desktop/revieworger/junit6589184915098999721.properties" />
+    <property name="jdk.debug" value="release" />
+    <property name="sun.cpu.endian" value="little" />
+    <property name="user.home" value="/Users/shehryar" />
+    <property name="user.language" value="en" />
+    <property name="java.specification.vendor" value="Oracle Corporation" />
+    <property name="test.excludes" value="**/*PseudoTest.java" />
+    <property name="_jacoco.agentFile" value="/var/folders/ws/80s4482s0rs8zplcb78kqhv80000gn/T/jacocoagent12651097656249447134.jar" />
+    <property name="java.version.date" value="2026-10-24" />
+    <property name="ant.file.type.ReviewOger" value="file" />
+    <property name="java.home" value="/opt/homebrew/Cellar/openjdk/27.0.1.0.3/libexec/openjdk.jdk/Contents/Home" />
+    <property name="basedir" value="/Users/shehryar/Desktop/revieworger" />
+    <property name="file.separator" value="/" />
+    <property name="java.vm.compressedOopsMode" value="Non-zero disjoint base" />
+    <property name="line.separator" value="&#xa;" />
+    <property name="ant.java.version" value="27" />
+    <property name="java.specification.name" value="Java Platform API Specification" />
+    <property name="java.vm.specification.vendor" value="Oracle Corporation" />
+    <property name="java.awt.headless" value="true" />
+    <property name="lib.test" value="/Users/shehryar/Desktop/revieworger/lib-test" />
+    <property name="apple.awt.application.name" value="JUnitTestRunner" />
+    <property name="TSTAMP" value="2057" />
+    <property name="defer.test.failure" value="true" />
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers" />
+    <property name="jacoco.lib" value="/Users/shehryar/Desktop/revieworger/tools/jacoco/lib" />
+    <property name="java.runtime.version" value="27.0.1.0.3" />
+    <property name="test.build" value="/Users/shehryar/Desktop/revieworger/build-test" />
+    <property name="user.name" value="shehryar" />
+    <property name="ant.file" value="/Users/shehryar/Desktop/revieworger/build.xml" />
+    <property name="stdout.encoding" value="UTF-8" />
+    <property name="hamcrest.version" value="1.3" />
+    <property name="path.separator" value=":" />
+    <property name="jacoco.dir" value="/Users/shehryar/Desktop/revieworger/reports/jacoco" />
+    <property name="os.version" value="27.2.1" />
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment" />
+    <property name="file.encoding" value="UTF-8" />
+    <property name="ant.project.invoked-targets" value="clean,dist,coverageReport" />
+    <property name="ant.file.ReviewOger" value="/Users/shehryar/Desktop/revieworger/build.xml" />
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM" />
+    <property name="java.vendor.version" value="Homebrew" />
+    <property name="junit.dir" value="/Users/shehryar/Desktop/revieworger/reports/junit" />
+    <property name="ant.core.lib" value="/opt/homebrew/Cellar/ant/1.10.18/libexec/lib/ant.jar" />
+    <property name="java.vendor.url.bug" value="https://github.com/Homebrew/homebrew-core/issues" />
+    <property name="java.io.tmpdir" value="/var/folders/ws/80s4482s0rs8zplcb78kqhv80000gn/T/" />
+    <property name="pit.targetClasses" value="data.*,logic.*,io.FileProcessor*,io.TableOutputter*" />
+    <property name="pit.targetTests" value="*Test" />
+    <property name="java.version" value="27.0.1.0.3" />
+    <property name="TODAY" value="November 24 2026" />
+    <property name="src" value="/Users/shehryar/Desktop/revieworger/src" />
+    <property name="user.dir" value="/Users/shehryar/Desktop/revieworger" />
+    <property name="os.arch" value="aarch64" />
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification" />
+    <property name="ant.home" value="/opt/homebrew/Cellar/ant/1.10.18/libexec" />
+    <property name="native.encoding" value="UTF-8" />
+    <property name="ant.version" value="Apache Ant(TM) version 1.10.18 compiled on September 3 2026" />
+    <property name="java.library.path" value="/Users/shehryar/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:." />
+    <property name="java.vendor" value="Homebrew" />
+    <property name="stderr.encoding" value="UTF-8" />
+    <property name="java.vm.info" value="mixed mode, sharing" />
+    <property name="stdin.encoding" value="UTF-8" />
+    <property name="java.vm.version" value="27.0.1.0.3" />
+    <property name="build" value="/Users/shehryar/Desktop/revieworger/build" />
+    <property name="commons-text.version" value="1.14.0" />
+    <property name="sun.io.unicode.encoding" value="UnicodeBig" />
+    <property name="java.class.version" value="71.0" />
+    <property name="ant.project.default-target" value="dist" />
+  </properties>
+  <testcase classname="io.FileProcessorTest" name="printResultListsEveryRoleWithMailAddress" time="0.008" />
+  <testcase classname="io.FileProcessorTest" name="unwritableResultFileIsReportedToTheUser" time="0.208" />
+  <testcase classname="io.FileProcessorTest" name="roomWithBeamerAndMissingRolesAreLeftOut" time="0.001" />
+  <testcase classname="io.FileProcessorTest" name="processLineRejectsMissingFields" time="0.001" />
+  <testcase classname="io.FileProcessorTest" name="printResultNoMailWritesASecondFileWithoutAddresses" time="0.0" />
+  <testcase classname="io.FileProcessorTest" name="processLineCreatesATrimmedParticipant" time="0.0" />
+  <testcase classname="io.FileProcessorTest" name="readParticipantListImportsEveryLine" time="0.002" />
+  <testcase classname="io.FileProcessorTest" name="processLineIgnoresBlankLines" time="0.0" />
+  <testcase classname="io.FileProcessorTest" name="missingCsvFileIsReportedToTheUser" time="0.001" />
+  <testcase classname="io.FileProcessorTest" name="namesAreWrittenWithoutSpaces" time="0.001" />
+  <testcase classname="io.FileProcessorTest" name="processLineRejectsNonNumericGroups" time="0.0" />
+  <testcase classname="io.FileProcessorTest" name="brokenLinesAreLoggedWithTheirLineNumber" time="0.002" />
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

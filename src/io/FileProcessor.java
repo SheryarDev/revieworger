@@ -241,12 +241,10 @@ public class FileProcessor {
 			writer.close();
 
 		} catch (FileNotFoundException e1) {
-			System.out.println(e1.getStackTrace());
 			JOptionPane.showMessageDialog(null,
 					"Konnte Ergebnis-Datei nicht schreiben", "Error",
 					JOptionPane.ERROR_MESSAGE);
 		} catch (IOException e1) {
-			System.out.println(e1.getStackTrace());
 			JOptionPane.showMessageDialog(null,
 					"Konnte Ergebnis-Datei nicht schreiben", "Error",
 					JOptionPane.ERROR_MESSAGE);
@@ -328,12 +326,10 @@ public class FileProcessor {
 			writer.close();
 
 		} catch (FileNotFoundException e1) {
-			System.out.println(e1.getStackTrace());
 			JOptionPane.showMessageDialog(null,
 					"Konnte Ergebnis-Datei nicht schreiben", "Error",
 					JOptionPane.ERROR_MESSAGE);
 		} catch (IOException e1) {
-			System.out.println(e1.getStackTrace());
 			JOptionPane.showMessageDialog(null,
 					"Konnte Ergebnis-Datei nicht schreiben", "Error",
 					JOptionPane.ERROR_MESSAGE);

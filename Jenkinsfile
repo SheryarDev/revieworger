@@ -8,6 +8,8 @@ pipeline {
 
     environment {
         SPOTBUGS_HOME = '/opt/spotbugs-4.10.2'
+        // SpotBugs (ex. 2) + JUnit/JaCoCo/PIT (ex. 3) reports
+        REPORT_ARTIFACTS = 'reports/spotbugs.xml, reports/spotbugs.html, reports/junit/*.xml, reports/jacoco/**, reports/jacoco-pseudo/**, reports/pit/**, reports/pit-pseudo/**'
     }
 
     stages {
@@ -66,10 +68,36 @@ pipeline {
             }
         }
 
+        stage('Unit Tests & Coverage') {
+            steps {
+                // Runs the JUnit suite with the JaCoCo agent attached.
+                // JaCoCo comes from tools/jacoco/lib (in the repo); the first run
+                // downloads JUnit/PIT into lib-test/, which 'ant clean' keeps.
+                sh 'ant coverageReport'
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'reports/junit/TEST-*.xml'
+                }
+            }
+        }
+
+        stage('Mutation Testing') {
+            steps {
+                // PIT mutates data.*, logic.*, io.FileProcessor and
+                // io.TableOutputter and reruns the test suite on each mutant.
+                sh 'ant pit'
+                // same mutants, but only the assertion-free pseudo-tests:
+                // high line coverage, very low mutation score
+                sh 'ant pit-pseudo'
+                // JaCoCo report of the pseudo-tests alone (coverage looks fine...)
+                sh 'ant coverageReportPseudo'
+            }
+        }
+
         stage('Archive Results') {
             steps {
-                archiveArtifacts artifacts: 'reports/spotbugs.xml, reports/spotbugs.html',
-                                 allowEmptyArchive: false
+                archiveArtifacts artifacts: env.REPORT_ARTIFACTS, allowEmptyArchive: false
             }
         }
 
@@ -87,14 +115,18 @@ pipeline {
                         REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/SheryarDev/revieworger.git"
 
                         # Commit only the reports; build/ and dist/ changes stay local.
-                        git add -f reports/spotbugs.xml reports/spotbugs.html
+                        git add -f reports/spotbugs.xml reports/spotbugs.html \
+                                   reports/junit \
+                                   reports/jacoco/report.xml reports/jacoco/report.csv reports/jacoco/html \
+                                   reports/jacoco-pseudo/report.xml reports/jacoco-pseudo/html \
+                                   reports/pit reports/pit-pseudo
 
                         if git diff --cached --quiet; then
                             echo "Reports unchanged - nothing to push."
                             exit 0
                         fi
 
-                        git commit -m "Update SpotBugs reports (build #${BUILD_NUMBER}) [skip ci]"
+                        git commit -m "Update SpotBugs, coverage and mutation reports (build #${BUILD_NUMBER}) [skip ci]"
                         git pull --rebase --autostash "$REPO_URL" main
                         git push "$REPO_URL" HEAD:main
                     '''
@@ -105,8 +137,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'reports/spotbugs.xml, reports/spotbugs.html',
-                             allowEmptyArchive: true
+            archiveArtifacts artifacts: env.REPORT_ARTIFACTS, allowEmptyArchive: true
         }
     }
 }

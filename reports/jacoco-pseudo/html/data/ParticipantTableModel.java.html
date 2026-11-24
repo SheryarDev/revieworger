@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ParticipantTableModel.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">data</a> &gt; <span class="el_source">ParticipantTableModel.java</span></div><h1>ParticipantTableModel.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package data;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.table.AbstractTableModel;
+
+/**
+ * This class is the table model of the participant table
+ */
+public class ParticipantTableModel extends AbstractTableModel {
+
+	private static final long serialVersionUID = 7633974611670892835L;
+
+	/**
+	 * All participants
+	 */
+<span class="fc" id="L28">	private List&lt;Participant&gt; participants = new ArrayList&lt;Participant&gt;();</span>
+
+	/**
+	 * an instance of the model to use the singleton pattern
+	 */
+	private static ParticipantTableModel instance;
+
+	/**
+	 * private constructor for singleton
+	 */
+<span class="fc" id="L38">	private ParticipantTableModel() {</span>
+<span class="fc" id="L39">	}</span>
+
+	/**
+	 * An implementation of the singleton pattern
+	 * 
+	 * @return an instance of the model
+	 */
+	public static ParticipantTableModel getInstance() {
+<span class="fc bfc" id="L47" title="All 2 branches covered.">		if (ParticipantTableModel.instance == null) {</span>
+<span class="fc" id="L48">			ParticipantTableModel.instance = new ParticipantTableModel();</span>
+		}
+<span class="fc" id="L50">		return ParticipantTableModel.instance;</span>
+	}
+
+	@Override
+	public int getColumnCount() {
+<span class="nc" id="L55">		return 4;</span>
+	}
+
+	@Override
+	public int getRowCount() {
+<span class="nc" id="L60">		return participants.size();</span>
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see javax.swing.table.AbstractTableModel#getColumnName(int)
+	 */
+	public String getColumnName(int column) {
+<span class="fc bfc" id="L70" title="All 5 branches covered.">		switch (column) {</span>
+		case 0:
+<span class="fc" id="L72">			return &quot;Vorname&quot;;</span>
+		case 1:
+<span class="fc" id="L74">			return &quot;Nachname&quot;;</span>
+		case 2:
+<span class="fc" id="L76">			return &quot;E-Mail&quot;;</span>
+		case 3:
+<span class="fc" id="L78">			return &quot;Gruppe&quot;;</span>
+		default:
+<span class="fc" id="L80">			return null;</span>
+		}
+	}
+
+	@Override
+	public Object getValueAt(int arg0, int arg1) {
+<span class="fc bfc" id="L86" title="All 2 branches covered.">		if (arg1 == 0) {</span>
+<span class="fc" id="L87">			return participants.get(arg0).getFirstName();</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">		} else if (arg1 == 1) {</span>
+<span class="fc" id="L89">			return participants.get(arg0).getLastName();</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">		} else if (arg1 == 2) {</span>
+<span class="fc" id="L91">			return participants.get(arg0).geteMailAdress();</span>
+		} else {
+<span class="fc" id="L93">			return participants.get(arg0).getGroupNumber();</span>
+		}
+	}
+
+	/**
+	 * @return the list with all participants
+	 */
+	public List&lt;Participant&gt; getParticipants() {
+<span class="fc" id="L101">		return participants;</span>
+	}
+
+	/**
+	 * adds a new participant
+	 * 
+	 * @param newParticipant
+	 */
+	public void addParticipant(Participant newParticipant) {
+<span class="fc" id="L110">		participants.add(newParticipant);</span>
+<span class="fc" id="L111">		fireTableDataChanged();</span>
+<span class="fc" id="L112">	}</span>
+
+	/**
+	 * deletes a participant
+	 * 
+	 * @param index
+	 *            the index of the participant
+	 */
+	public void deleteParticipants(int[] indexes) {
+<span class="nc" id="L121">		ArrayList&lt;Participant&gt; participantsToRemove = new ArrayList&lt;Participant&gt;();</span>
+		// list of all planned to remove participants
+<span class="nc bnc" id="L123" title="All 2 branches missed.">		for (int index : indexes) {</span>
+<span class="nc" id="L124">			participantsToRemove.add(participants.get(index));</span>
+
+		}
+
+		// now delete them
+<span class="nc bnc" id="L129" title="All 2 branches missed.">		for (Participant p : participantsToRemove) {</span>
+<span class="nc" id="L130">			participants.remove(p);</span>
+<span class="nc" id="L131">			fireTableDataChanged();</span>
+<span class="nc" id="L132">		}</span>
+
+<span class="nc" id="L134">	}</span>
+
+	/**
+	 * @param index
+	 *            the index of the wanted participant
+	 * @return the participant at the given index
+	 */
+	public Participant getParticipantAt(int index) {
+<span class="nc" id="L142">		return participants.get(index);</span>
+	}
+
+	/**
+	 * @return true if empty
+	 */
+	public boolean isEmpty() {
+<span class="nc" id="L149">		return participants.isEmpty();</span>
+	}
+
+	public void clear() {
+<span class="fc" id="L153">		participants.clear();</span>
+<span class="fc" id="L154">		fireTableDataChanged();</span>
+<span class="fc" id="L155">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

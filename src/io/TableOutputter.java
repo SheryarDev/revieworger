@@ -135,9 +135,8 @@ public class TableOutputter {
 				result = result + end + " Uhr & Review: ";
 
 				// review letters
-				System.out.println(array[0].length);
-				for (int i = 0; i < array[1].length ; i++) {
-					System.out.println(slotCounter + ";" + i);
+				// row length of the current slot (array[1] crashed with one slot)
+				for (int i = 0; i < array[slotCounter].length ; i++) {
 					if (array[slotCounter][i] == null) {
 						result = result + "& - ";
 					} else {

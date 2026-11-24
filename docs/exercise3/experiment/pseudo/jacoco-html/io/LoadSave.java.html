@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LoadSave.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">io</a> &gt; <span class="el_source">LoadSave.java</span></div><h1>LoadSave.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package io;
+
+import gui.Gui;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
+
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+
+import main.Main;
+
+import org.jdom2.Attribute;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
+
+import data.Participant;
+import data.ParticipantTableModel;
+import data.Room;
+import data.RoomNode;
+import data.RoomTreeModel;
+import data.Slot;
+import data.SlotNode;
+
+/**
+ * This class holds the functionality of loading and saving participants, slots
+ * and rooms
+ */
+<span class="nc" id="L51">public class LoadSave {</span>
+	/**
+	 * Saves the current status to a .oger file
+	 */
+	public static void save() {
+		// get the selected file
+<span class="nc" id="L57">		File file = IODialog.showSaveDialog(&quot;.oger&quot;, true);</span>
+		// not canceled
+<span class="nc bnc" id="L59" title="All 2 branches missed.">		if (file != null) {</span>
+<span class="nc" id="L60">			DefaultTreeModel treeModel = RoomTreeModel.getInstance();</span>
+			ParticipantTableModel participantModel = ParticipantTableModel
+<span class="nc" id="L62">					.getInstance();</span>
+
+			// Create the XML root Element
+<span class="nc" id="L65">			Element root = new Element(&quot;root&quot;);</span>
+
+			// Create a JDOM Document based on the root Element
+<span class="nc" id="L68">			Document document = new Document(root);</span>
+
+<span class="nc" id="L70">			List&lt;Participant&gt; participants = participantModel.getParticipants();</span>
+
+			// Participants
+<span class="nc" id="L73">			Element allParticipantsElement = new Element(&quot;allParticipants&quot;);</span>
+
+<span class="nc bnc" id="L75" title="All 2 branches missed.">			for (Participant p : participants) {</span>
+<span class="nc" id="L76">				Element participantElement = new Element(&quot;participant&quot;);</span>
+
+<span class="nc" id="L78">				Attribute firstNameAttribute = new Attribute(&quot;firstName&quot;,</span>
+<span class="nc" id="L79">						p.getFirstName());</span>
+<span class="nc" id="L80">				participantElement.setAttribute(firstNameAttribute);</span>
+
+<span class="nc" id="L82">				Attribute lastNameAttribute = new Attribute(&quot;lastName&quot;,</span>
+<span class="nc" id="L83">						p.getLastName());</span>
+<span class="nc" id="L84">				participantElement.setAttribute(lastNameAttribute);</span>
+
+<span class="nc" id="L86">				Attribute mailAttribute = new Attribute(&quot;mail&quot;,</span>
+<span class="nc" id="L87">						p.geteMailAdress());</span>
+<span class="nc" id="L88">				participantElement.setAttribute(mailAttribute);</span>
+
+<span class="nc" id="L90">				Attribute groupAttribute = new Attribute(&quot;group&quot;,</span>
+<span class="nc" id="L91">						p.getGroupNumber());</span>
+<span class="nc" id="L92">				participantElement.setAttribute(groupAttribute);</span>
+
+<span class="nc" id="L94">				allParticipantsElement.addContent(participantElement);</span>
+<span class="nc" id="L95">			}</span>
+<span class="nc" id="L96">			root.addContent(allParticipantsElement);</span>
+
+			// Slots with reviews
+<span class="nc" id="L99">			Element allSlotsElement = new Element(&quot;Slots&quot;);</span>
+
+			// all slots
+			SlotNode currentSlotNode;
+			RoomNode currentRoomNode;
+<span class="nc" id="L104">			DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) treeModel</span>
+<span class="nc" id="L105">					.getRoot();</span>
+
+<span class="nc" id="L107">			DateFormat dateFormatter = new SimpleDateFormat(&quot;dd.MM.yy&quot;);</span>
+<span class="nc" id="L108">			DateFormat beginFormatter = new SimpleDateFormat(&quot;HH:mm&quot;);</span>
+<span class="nc" id="L109">			DateFormat endFormatter = new SimpleDateFormat(&quot;HH:mm&quot;);</span>
+			;
+
+<span class="nc" id="L112">			for (Enumeration&lt;TreeNode&gt; enumSlots = rootNode.children(); enumSlots</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">					.hasMoreElements();) {</span>
+<span class="nc" id="L114">				currentSlotNode = (SlotNode) enumSlots.nextElement();</span>
+<span class="nc" id="L115">				Slot currentSlot = (Slot) currentSlotNode.getUserObject();</span>
+
+<span class="nc" id="L117">				Element slotElement = new Element(&quot;Slot&quot;);</span>
+
+<span class="nc" id="L119">				String date = dateFormatter.format(currentSlot.getDate()</span>
+<span class="nc" id="L120">						.getTime());</span>
+<span class="nc" id="L121">				Attribute dateAttribute = new Attribute(&quot;Date&quot;, date);</span>
+<span class="nc" id="L122">				slotElement.setAttribute(dateAttribute);</span>
+
+<span class="nc" id="L124">				String begin = beginFormatter.format(currentSlot.getBeginTime()</span>
+<span class="nc" id="L125">						.getTime());</span>
+<span class="nc" id="L126">				Attribute beginAttribute = new Attribute(&quot;Begin&quot;, begin);</span>
+<span class="nc" id="L127">				slotElement.setAttribute(beginAttribute);</span>
+
+<span class="nc" id="L129">				String end = endFormatter.format(currentSlot.getEndTime()</span>
+<span class="nc" id="L130">						.getTime());</span>
+<span class="nc" id="L131">				Attribute endAttribute = new Attribute(&quot;End&quot;, end);</span>
+<span class="nc" id="L132">				slotElement.setAttribute(endAttribute);</span>
+
+				// all rooms
+<span class="nc" id="L135">				Element allRoomsElement = new Element(&quot;AllRooms&quot;);</span>
+
+<span class="nc" id="L137">				for (Enumeration&lt;TreeNode&gt; enumRooms = currentSlotNode</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">						.children(); enumRooms.hasMoreElements();) {</span>
+<span class="nc" id="L139">					currentRoomNode = (RoomNode) enumRooms.nextElement();</span>
+<span class="nc" id="L140">					Room currentRoom = (Room) currentRoomNode.getUserObject();</span>
+
+<span class="nc" id="L142">					Element roomElement = new Element(&quot;Room&quot;);</span>
+
+					Attribute beamerAttribute;
+<span class="nc bnc" id="L145" title="All 2 branches missed.">					if (currentRoom.hasBeamer()) {</span>
+<span class="nc" id="L146">						beamerAttribute = new Attribute(&quot;Beamer&quot;, &quot;true&quot;);</span>
+					} else {
+<span class="nc" id="L148">						beamerAttribute = new Attribute(&quot;Beamer&quot;, &quot;false&quot;);</span>
+					}
+<span class="nc" id="L150">					roomElement.setAttribute(beamerAttribute);</span>
+
+<span class="nc" id="L152">					Attribute idAttribute = new Attribute(&quot;ID&quot;,</span>
+<span class="nc" id="L153">							currentRoom.getRoomID());</span>
+<span class="nc" id="L154">					roomElement.setAttribute(idAttribute);</span>
+
+<span class="nc" id="L156">					String beginRoom = beginFormatter.format(currentRoom</span>
+<span class="nc" id="L157">							.getBeginTime().getTime());</span>
+<span class="nc" id="L158">					Attribute beginRoomAttribute = new Attribute(&quot;Begin&quot;,</span>
+							beginRoom);
+<span class="nc" id="L160">					roomElement.setAttribute(beginRoomAttribute);</span>
+
+<span class="nc" id="L162">					String endRoom = endFormatter.format(currentRoom</span>
+<span class="nc" id="L163">							.getEndTime().getTime());</span>
+<span class="nc" id="L164">					Attribute endRoomAttribute = new Attribute(&quot;End&quot;, endRoom);</span>
+<span class="nc" id="L165">					roomElement.setAttribute(endRoomAttribute);</span>
+
+<span class="nc" id="L167">					allRoomsElement.addContent(roomElement);</span>
+
+<span class="nc" id="L169">				}</span>
+<span class="nc" id="L170">				slotElement.addContent(allRoomsElement);</span>
+
+<span class="nc" id="L172">				allSlotsElement.addContent(slotElement);</span>
+
+<span class="nc" id="L174">			}</span>
+
+<span class="nc" id="L176">			root.addContent(allSlotsElement);</span>
+
+			try {
+				// output
+<span class="nc" id="L180">				Format format = Format.getPrettyFormat();</span>
+<span class="nc" id="L181">				format.setEncoding(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L182">				XMLOutputter xmlOutputter = new XMLOutputter(</span>
+						format);
+<span class="nc" id="L184">				xmlOutputter.output(document, new FileOutputStream(file));</span>
+<span class="nc" id="L185">				Main.setSaved(true);</span>
+<span class="nc" id="L186">			} catch (java.io.IOException e) {</span>
+<span class="nc" id="L187">				JOptionPane.showMessageDialog(null, e.getLocalizedMessage());</span>
+<span class="nc" id="L188">			}</span>
+		}
+<span class="nc" id="L190">	}</span>
+
+	/**
+	 * loads a .oger file
+	 */
+	public static void load() {
+
+<span class="nc" id="L197">		ParticipantTableModel tableModel = ParticipantTableModel.getInstance();</span>
+<span class="nc" id="L198">		RoomTreeModel slotModel = RoomTreeModel.getInstance();</span>
+
+<span class="nc bnc" id="L200" title="All 2 branches missed.">		if (!Main.isSaved()) {</span>
+
+			// current game must be saved
+<span class="nc" id="L203">			int saveResult = JOptionPane.showOptionDialog(null,</span>
+					&quot;Möchten Sie vorher speichern?&quot;, &quot;Speichern?&quot;,
+					JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE,
+					null, null, null);
+<span class="nc bnc" id="L207" title="All 2 branches missed.">			if (saveResult == JOptionPane.YES_OPTION) {</span>
+<span class="nc" id="L208">				save();</span>
+			}
+		}
+
+<span class="nc" id="L212">		Document document = new Document();</span>
+<span class="nc" id="L213">		Element root = new Element(&quot;root&quot;);</span>
+
+<span class="nc" id="L215">		SAXBuilder saxBuilder = new SAXBuilder();</span>
+
+		// Dialog to choose the oger file to parse
+<span class="nc" id="L218">		JFileChooser fileChoser = new JFileChooser(&quot;.xml&quot;);</span>
+<span class="nc" id="L219">		fileChoser.setFileFilter(new OgerDialogFilter());</span>
+
+<span class="nc" id="L221">		int result = fileChoser.showOpenDialog(null);</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">		switch (result) {</span>
+
+		case JFileChooser.APPROVE_OPTION:
+			try {
+				// clear models
+<span class="nc" id="L227">				tableModel.clear();</span>
+<span class="nc" id="L228">				slotModel.clear();</span>
+
+				// Create a new JDOM document from a oger file
+<span class="nc" id="L231">				File file = fileChoser.getSelectedFile();</span>
+<span class="nc" id="L232">				document = saxBuilder.build(file);</span>
+<span class="nc" id="L233">			} catch (Exception e) {</span>
+<span class="nc" id="L234">				JOptionPane.showMessageDialog(null,</span>
+						&quot;Fehler beim Parsen der Datei!&quot;);
+<span class="nc" id="L236">			}</span>
+
+			// Initialize the root Element with the document root Element
+			try {
+<span class="nc" id="L240">				root = document.getRootElement();</span>
+<span class="nc" id="L241">			} catch (NullPointerException e) {</span>
+<span class="nc" id="L242">				JOptionPane.showMessageDialog(null,</span>
+						&quot;Fehler beim Parsen der Datei!&quot;);
+<span class="nc" id="L244">			}</span>
+
+			// participants
+<span class="nc" id="L247">			Element participantsElement = root.getChild(&quot;allParticipants&quot;);</span>
+
+<span class="nc bnc" id="L249" title="All 2 branches missed.">			for (Element participant : participantsElement</span>
+<span class="nc" id="L250">					.getChildren(&quot;participant&quot;)) {</span>
+<span class="nc" id="L251">				String firstName = participant.getAttributeValue(&quot;firstName&quot;);</span>
+<span class="nc" id="L252">				String lastName = participant.getAttributeValue(&quot;lastName&quot;);</span>
+<span class="nc" id="L253">				String mail = participant.getAttributeValue(&quot;mail&quot;);</span>
+<span class="nc" id="L254">				String group = participant</span>
+<span class="nc" id="L255">						.getAttributeValue(&quot;group&quot;);</span>
+
+<span class="nc" id="L257">				Participant newParticipant = new Participant(firstName,</span>
+						lastName, mail, group);
+<span class="nc" id="L259">				tableModel.addParticipant(newParticipant);</span>
+<span class="nc" id="L260">			}</span>
+
+			// slots
+<span class="nc" id="L263">			final DateFormat dateFormat = new SimpleDateFormat(&quot;dd.MM.yy&quot;);</span>
+<span class="nc" id="L264">			final DateFormat timeFormat = new SimpleDateFormat(&quot;HH:mm&quot;);</span>
+<span class="nc" id="L265">			boolean parseFailed = false;</span>
+
+<span class="nc" id="L267">			Element slotsElement = root.getChild(&quot;Slots&quot;);</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">			for (Element slotElement : slotsElement.getChildren(&quot;Slot&quot;)) {</span>
+<span class="nc" id="L269">				Date date = null;</span>
+<span class="nc" id="L270">				Date beginTime = null;</span>
+<span class="nc" id="L271">				Date endTime = null;</span>
+
+				try {
+<span class="nc" id="L274">					date = dateFormat.parse(slotElement</span>
+<span class="nc" id="L275">							.getAttributeValue(&quot;Date&quot;));</span>
+<span class="nc" id="L276">				} catch (ParseException e) {</span>
+<span class="nc" id="L277">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Konnte Slot-Datum nicht parsen&quot;,
+							&quot;Datum nicht erkannt&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L280">					parseFailed = true;</span>
+<span class="nc" id="L281">				}</span>
+
+				try {
+<span class="nc" id="L284">					beginTime = timeFormat.parse(slotElement</span>
+<span class="nc" id="L285">							.getAttributeValue(&quot;Begin&quot;));</span>
+<span class="nc" id="L286">				} catch (ParseException e) {</span>
+<span class="nc" id="L287">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Konnte Slot-Angfangszeit nicht parsen&quot;,
+							&quot;Anfangszeit nicht erkannt&quot;,
+							JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L291">					parseFailed = true;</span>
+<span class="nc" id="L292">				}</span>
+
+				try {
+<span class="nc" id="L295">					endTime = timeFormat.parse(slotElement</span>
+<span class="nc" id="L296">							.getAttributeValue(&quot;End&quot;));</span>
+<span class="nc" id="L297">				} catch (ParseException e) {</span>
+<span class="nc" id="L298">					JOptionPane.showMessageDialog(null,</span>
+							&quot;Konnte Slot-Endzeit nicht parsen&quot;,
+							&quot;Endzeit nicht erkannt&quot;, JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L301">					parseFailed = true;</span>
+<span class="nc" id="L302">				}</span>
+
+<span class="nc bnc" id="L304" title="All 2 branches missed.">				if (!parseFailed) {</span>
+<span class="nc" id="L305">					Slot slot = new Slot(date, beginTime, endTime);</span>
+<span class="nc" id="L306">					SlotNode newSlotNode = new SlotNode();</span>
+<span class="nc" id="L307">					newSlotNode.setUserObject(slot);</span>
+<span class="nc" id="L308">					((DefaultMutableTreeNode) RoomTreeModel.getInstance()</span>
+<span class="nc" id="L309">							.getRoot()).add(newSlotNode);</span>
+
+					// Rooms
+<span class="nc" id="L312">					Element roomsElement = slotElement.getChild(&quot;AllRooms&quot;);</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">					for (Element roomElement : roomsElement.getChildren(&quot;Room&quot;)) {</span>
+<span class="nc" id="L314">						parseFailed = false;</span>
+
+<span class="nc" id="L316">						String roomString = roomElement.getAttributeValue(&quot;ID&quot;);</span>
+<span class="nc" id="L317">						Date roomBeginTime = null;</span>
+<span class="nc" id="L318">						Date roomEndTime = null;</span>
+
+<span class="nc" id="L320">						Boolean hasBeamer = false;</span>
+<span class="nc" id="L321">						String hasBeamerString = roomElement</span>
+<span class="nc" id="L322">								.getAttributeValue(&quot;Beamer&quot;);</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">						if (hasBeamerString.equals(&quot;false&quot;)) {</span>
+<span class="nc" id="L324">							hasBeamer = false;</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">						} else if (hasBeamerString.equals(&quot;true&quot;)) {</span>
+<span class="nc" id="L326">							hasBeamer = true;</span>
+						} else {
+<span class="nc" id="L328">							JOptionPane.showMessageDialog(null,</span>
+									&quot;Beamer nicht erkannt&quot;,
+									&quot;Beamer nicht erkannt&quot;,
+									JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L332">							parseFailed = true;</span>
+						}
+
+						try {
+<span class="nc" id="L336">							roomBeginTime = timeFormat.parse(roomElement</span>
+<span class="nc" id="L337">									.getAttributeValue(&quot;Begin&quot;));</span>
+<span class="nc" id="L338">						} catch (ParseException e) {</span>
+<span class="nc" id="L339">							JOptionPane.showMessageDialog(null,</span>
+									&quot;Konnte Slot-Angfangszeit nicht parsen&quot;,
+									&quot;Anfangszeit nicht erkannt&quot;,
+									JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L343">							parseFailed = true;</span>
+<span class="nc" id="L344">						}</span>
+
+						try {
+<span class="nc" id="L347">							roomEndTime = timeFormat.parse(roomElement</span>
+<span class="nc" id="L348">									.getAttributeValue(&quot;End&quot;));</span>
+<span class="nc" id="L349">						} catch (ParseException e) {</span>
+<span class="nc" id="L350">							JOptionPane.showMessageDialog(null,</span>
+									&quot;Konnte Slot-Endzeit nicht parsen&quot;,
+									&quot;Endzeit nicht erkannt&quot;,
+									JOptionPane.ERROR_MESSAGE);
+<span class="nc" id="L354">							parseFailed = true;</span>
+<span class="nc" id="L355">						}</span>
+
+<span class="nc bnc" id="L357" title="All 2 branches missed.">						if (!parseFailed) {</span>
+<span class="nc" id="L358">							Room room = new Room(roomString, hasBeamer,</span>
+									roomBeginTime, roomEndTime);
+
+<span class="nc" id="L361">							RoomNode newRoomNode = new RoomNode();</span>
+<span class="nc" id="L362">							newRoomNode.setUserObject(room);</span>
+
+<span class="nc" id="L364">							newSlotNode.add(newRoomNode);</span>
+<span class="nc" id="L365">							Gui.getRoomTree().updateUI();</span>
+						}
+<span class="nc" id="L367">					}</span>
+
+<span class="nc" id="L369">					Gui.getRoomTree().updateUI();</span>
+				}
+<span class="nc" id="L371">			}</span>
+
+		}
+
+<span class="nc" id="L375">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

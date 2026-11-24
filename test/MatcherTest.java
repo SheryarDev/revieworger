@@ -25,8 +25,11 @@ import logic.Matcher;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import testutil.AppState;
 import data.Participant;
 import data.ParticipantTableModel;
 import data.Review;
@@ -39,6 +42,14 @@ import data.SlotNode;
 public class MatcherTest {
 
 	int errorCount = 0;
+
+	// the participant/room singletons are shared with the other test
+	// classes in the same JVM, so start (and end) with an empty state
+	@Before
+	@After
+	public void resetState() {
+		AppState.reset();
+	}
 
 	@Test
 	public void testCalculatedResults() {
@@ -157,6 +168,15 @@ public class MatcherTest {
 					// scribe == author
 					assertSame(review.getScribe(), review.getAuthor());
 
+				}
+				// added for exercise 3: the counter used by the pools must
+				// match the real assignments, otherwise participants get
+				// too many reviews (PIT: removed increaseParticipation()
+				// call in Matcher survived)
+				for (Participant p : ParticipantTableModel.getInstance()
+						.getParticipants()) {
+					assertEquals(2, p.getReviews().size());
+					assertEquals(p.getReviews().size(), p.getNumberOfReviews());
 				}
 			} else {
 				errorCount++;

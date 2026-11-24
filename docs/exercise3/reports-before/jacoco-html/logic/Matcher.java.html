@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Matcher.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ReviewOger</a> &gt; <a href="index.source.html" class="el_package">logic</a> &gt; <span class="el_source">Matcher.java</span></div><h1>Matcher.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2014 Verena Käfer.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU General Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * Contributors:
+ * Verena Käfer - initial version
+ *******************************************************************************/
+package logic;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+
+import data.Participant;
+import data.ParticipantTableModel;
+import data.Review;
+import data.ReviewPlan;
+import data.Room;
+import data.RoomNode;
+import data.RoomTreeModel;
+import data.Slot;
+import data.SlotNode;
+
+/**
+ * This class provides the main logical functions to match participants to
+ * reviews
+ */
+public class Matcher implements Callable&lt;ArrayList&lt;Review&gt;&gt; {
+
+	public Matcher(String exitSelection, boolean scribeIsAuthor,
+<span class="fc" id="L40">			boolean moderatorNotReviewerGroup) {</span>
+<span class="fc" id="L41">		this.moderatorNotReviewerGroup = moderatorNotReviewerGroup;</span>
+<span class="fc" id="L42">		this.scribeIsAuthor = scribeIsAuthor;</span>
+<span class="fc" id="L43">	}</span>
+
+	private boolean scribeIsAuthor;
+	private boolean moderatorNotReviewerGroup;
+	private int amountReviewers;
+
+	/**
+	 * true for the first try ever, as then the lists must be created, false
+	 * later
+	 */
+<span class="fc" id="L53">	private boolean firstRound = true;</span>
+
+<span class="fc" id="L55">	ArrayList&lt;Slot&gt; slots = new ArrayList&lt;Slot&gt;();</span>
+
+	/**
+	 * This function matches all participants to the reviews
+	 * 
+	 * @return A review plan with a solution, null if no solution waa found
+	 */
+	public ArrayList&lt;Review&gt; MatchReview() {
+		// first try so list has to be made manually
+<span class="fc bfc" id="L64" title="All 2 branches covered.">		if (firstRound) {</span>
+			// list of reviews with assigned author
+<span class="fc" id="L66">			makeList();</span>
+
+<span class="fc" id="L68">			amountReviewers = calculateReviewers();</span>
+
+			// make a list of all slots in the tree
+<span class="fc" id="L71">			sortSlots();</span>
+
+		} else {
+
+<span class="fc" id="L75">			resetParticipants();</span>
+
+			// list of reviews with assigned author
+<span class="fc" id="L78">			makeList();</span>
+
+			// reset slots
+<span class="fc bfc" id="L81" title="All 2 branches covered.">			for (Slot s : slots) {</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">				for (Room r : s.getRooms()) {</span>
+<span class="fc" id="L83">					r.setReview(null);</span>
+
+<span class="fc" id="L85">				}</span>
+<span class="fc" id="L86">			}</span>
+		}
+
+		// fill current slot. As slots are ordered in sortSlots(), the method
+		// begins with the largest slot
+<span class="fc bfc" id="L91" title="All 2 branches covered.">		for (Slot s : slots) {</span>
+<span class="fc" id="L92">			fillSlot(s);</span>
+<span class="fc" id="L93">		}</span>
+
+<span class="fc" id="L95">		ReviewPlan plan = ReviewPlan.getInstance();</span>
+<span class="fc" id="L96">		List&lt;Review&gt; tempReviews = plan.getTempReviews();</span>
+
+		// every review is matched
+<span class="fc bfc" id="L99" title="All 2 branches covered.">		if (tempReviews.isEmpty()) {</span>
+			// left participants must be matched
+<span class="fc" id="L101">			boolean extraOk = matchExtraReviewers();</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">			if (!extraOk) {</span>
+<span class="nc" id="L103">				firstRound = false;</span>
+<span class="nc" id="L104">				return null;</span>
+			}
+
+			// shuffle and try again
+<span class="fc" id="L108">		} else {</span>
+<span class="fc" id="L109">			firstRound = false;</span>
+<span class="fc" id="L110">			return null;</span>
+		}
+
+<span class="fc" id="L113">		return ReviewPlan.getInstance().getReviews();</span>
+	}
+
+	private void resetParticipants() {
+<span class="fc" id="L117">		List&lt;Participant&gt; participants = ParticipantTableModel.getInstance()</span>
+<span class="fc" id="L118">				.getParticipants();</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">		for (Participant p : participants) {</span>
+<span class="fc" id="L120">			p.setNumberOfReviews(0);</span>
+<span class="fc" id="L121">			p.resetReviews();</span>
+<span class="fc" id="L122">		}</span>
+
+<span class="fc" id="L124">	}</span>
+
+	/**
+	 * This method sorts the participants and then creates one review for every
+	 * group
+	 */
+	private void makeList() {
+
+<span class="fc" id="L132">		ReviewPlan plan = ReviewPlan.getInstance();</span>
+
+<span class="fc" id="L134">		List&lt;Participant&gt; participants = ParticipantTableModel.getInstance()</span>
+<span class="fc" id="L135">				.getParticipants();</span>
+		// sorted list
+<span class="fc" id="L137">		Collections.sort(participants);</span>
+
+<span class="fc" id="L139">		Participant currentParticipant = null;</span>
+<span class="fc" id="L140">		Participant previousParticipant = null;</span>
+<span class="fc" id="L141">		ReviewPlan.getInstance().resetLists();</span>
+
+<span class="fc bfc" id="L143" title="All 2 branches covered.">		for (int i = 0; i &lt; participants.size(); i++) {</span>
+<span class="fc" id="L144">			currentParticipant = participants.get(i);</span>
+			// first element
+<span class="fc bfc" id="L146" title="All 2 branches covered.">			if (i == 0) {</span>
+<span class="fc" id="L147">				Review review = new Review(currentParticipant);</span>
+<span class="fc" id="L148">				review.setAuthor(currentParticipant);</span>
+<span class="fc" id="L149">				currentParticipant.addReview(review);</span>
+<span class="fc" id="L150">				currentParticipant.increaseParticipation();</span>
+<span class="fc" id="L151">				plan.addTemp(review);</span>
+<span class="fc" id="L152">			} else {</span>
+<span class="fc" id="L153">				previousParticipant = participants.get(i - 1);</span>
+				// check if the own group was already added, if no make new
+				// review
+<span class="fc bfc" id="L156" title="All 2 branches covered.">				if (!currentParticipant.getGroupNumber().equals(previousParticipant</span>
+<span class="fc" id="L157">						.getGroupNumber())) {</span>
+<span class="fc" id="L158">					Review review = new Review(currentParticipant);</span>
+<span class="fc" id="L159">					review.setAuthor(currentParticipant);</span>
+<span class="fc" id="L160">					review.setAuthor(currentParticipant);</span>
+<span class="fc" id="L161">					currentParticipant.increaseParticipation();</span>
+<span class="fc" id="L162">					currentParticipant.addReview(review);</span>
+<span class="fc" id="L163">					plan.addTemp(review);</span>
+				}
+			}
+
+		}
+<span class="fc" id="L168">	}</span>
+
+	/**
+	 * This method calculates the mount of reviewers based on the amount of
+	 * groups
+	 * 
+	 * @return the calculated number of reviewers
+	 */
+	private int calculateReviewers() {
+
+<span class="fc" id="L178">		List&lt;Participant&gt; participants = ParticipantTableModel.getInstance()</span>
+<span class="fc" id="L179">				.getParticipants();</span>
+<span class="fc" id="L180">		ReviewPlan plan = ReviewPlan.getInstance();</span>
+<span class="fc" id="L181">		List&lt;Review&gt; tempReviews = plan.getTempReviews();</span>
+
+<span class="fc" id="L183">		int neededReviewers = 0;</span>
+<span class="fc" id="L184">		int participantSize = participants.size();</span>
+<span class="fc" id="L185">		int fillableReviews = tempReviews.size();</span>
+
+<span class="fc bfc" id="L187" title="All 2 branches covered.">		if (!scribeIsAuthor) {</span>
+
+			// for reviewers + author + scribe + moderator
+			// fillable reviews F must be #groups = #tempReviews
+			// #participants P
+			// needed: #reviewers R
+			// 2 * P / R+3 = F
+			// therefore:
+			// R = (2P / F) - 2
+
+<span class="fc" id="L197">			neededReviewers = (2 * participantSize / fillableReviews) - 3;</span>
+
+		} else {
+
+			// for reviewers + author + moderator
+			// fillable reviews F must be #groups = #tempReviews
+			// #participants P
+			// needed: #reviewers R
+			// 2 * P / R+2 = F
+			// therefore:
+			// R = (2P / F) - 1
+
+<span class="fc" id="L209">			neededReviewers = (2 * participantSize / fillableReviews) - 2;</span>
+
+		}
+<span class="fc" id="L212">		return neededReviewers;</span>
+
+	}
+
+	/**
+	 * This method makes a sorted list of all slots
+	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private void sortSlots() {
+<span class="fc" id="L221">		slots.clear();</span>
+<span class="fc" id="L222">		DefaultTreeModel model = RoomTreeModel.getInstance();</span>
+<span class="fc" id="L223">		DefaultMutableTreeNode root = (DefaultMutableTreeNode) model.getRoot();</span>
+
+		// all slots
+		SlotNode currentSlotNode;
+		RoomNode currentRoomNode;
+
+<span class="fc" id="L229">		for (Enumeration&lt;TreeNode&gt; enumSlots = root.children(); enumSlots</span>
+<span class="fc bfc" id="L230" title="All 2 branches covered.">				.hasMoreElements();) {</span>
+<span class="fc" id="L231">			currentSlotNode = (SlotNode) enumSlots.nextElement();</span>
+<span class="fc" id="L232">			Slot currentSlot = (Slot) currentSlotNode.getUserObject();</span>
+
+			// all rooms
+<span class="fc" id="L235">			for (Enumeration&lt;TreeNode&gt; enumRooms = currentSlotNode.children(); enumRooms</span>
+<span class="fc bfc" id="L236" title="All 2 branches covered.">					.hasMoreElements();) {</span>
+<span class="fc" id="L237">				currentRoomNode = (RoomNode) enumRooms.nextElement();</span>
+<span class="fc" id="L238">				Room currentRoom = (Room) currentRoomNode.getUserObject();</span>
+<span class="fc" id="L239">				currentSlot.addRoom(currentRoom);</span>
+<span class="fc" id="L240">				currentRoom.setSlot(currentSlot);</span>
+<span class="fc" id="L241">			}</span>
+
+<span class="fc" id="L243">			slots.add((Slot) currentSlotNode.getUserObject());</span>
+
+<span class="fc" id="L245">		}</span>
+
+		// sort slots
+<span class="fc" id="L248">		Collections.sort(slots);</span>
+<span class="fc" id="L249">	}</span>
+
+	/**
+	 * This method fills the current slot with reviews
+	 * 
+	 * @param slot
+	 *            the current slot
+	 * @param slots
+	 */
+	private void fillSlot(Slot slot) {
+
+<span class="fc" id="L260">		ReviewPlan plan = ReviewPlan.getInstance();</span>
+<span class="fc" id="L261">		ArrayList&lt;Review&gt; tempReviews = plan.getTempReviews();</span>
+
+		// fill all rooms in slot
+<span class="fc bfc" id="L264" title="All 2 branches covered.">		for (Room currentRoom : slot.getRooms()) {</span>
+<span class="fc" id="L265">			Review currentReview = fillReview(tempReviews, currentRoom, slot);</span>
+
+			// fill was not possible so next slot
+<span class="fc bfc" id="L268" title="All 2 branches covered.">			if (currentReview == null) {</span>
+
+<span class="fc" id="L270">				break;</span>
+			}
+			// The review is finished and can be added to the final plan
+<span class="fc" id="L273">			plan.add(currentReview);</span>
+<span class="fc" id="L274">			tempReviews.remove(currentReview);</span>
+<span class="fc" id="L275">		}</span>
+
+<span class="fc" id="L277">	}</span>
+
+	private Review fillReview(List&lt;Review&gt; tempReviews, Room currentRoom,
+			Slot currentSlot) {
+		// take first review and after successfully adding, delete it from temp
+		// list
+<span class="fc bfc" id="L283" title="All 2 branches covered.">		if (tempReviews.size() &gt; 0) {</span>
+
+<span class="fc" id="L285">			Participant author = null;</span>
+<span class="fc" id="L286">			Review currentReview = null;</span>
+
+			// check for current slot if new author is already in it
+<span class="fc bfc" id="L289" title="All 2 branches covered.">			for (Review r : tempReviews) {</span>
+<span class="fc" id="L290">				author = r.getAuthor();</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">				if (!Pool.ParticipantInSlot(author, currentSlot)) {</span>
+<span class="fc" id="L292">					currentReview = r;</span>
+<span class="fc" id="L293">					break;</span>
+				} else {
+<span class="fc" id="L295">					author = null;</span>
+				}
+<span class="fc" id="L297">			}</span>
+
+<span class="fc bfc" id="L299" title="All 2 branches covered.">			if (author != null) {</span>
+<span class="fc" id="L300">				currentRoom.setReview(currentReview);</span>
+<span class="fc" id="L301">				currentReview.setAssignedRoom(currentRoom);</span>
+
+<span class="fc" id="L303">				Pool pool = new Pool(currentSlot);</span>
+
+<span class="fc" id="L305">				ArrayList&lt;Participant&gt; possibleReviewers = pool</span>
+<span class="fc" id="L306">						.generatePoolForReviewers(currentReview);</span>
+
+				// number of reviewers + moderator
+<span class="fc bfc" id="L309" title="All 2 branches covered.">				if (scribeIsAuthor) {</span>
+					// enough participants -&gt; randomly select participants
+<span class="fc bfc" id="L311" title="All 2 branches covered.">					if (possibleReviewers.size() &gt;= amountReviewers) {</span>
+
+<span class="fc bfc" id="L313" title="All 2 branches covered.">						for (int i = 0; i &lt; amountReviewers; i++) {</span>
+<span class="fc" id="L314">							Participant reviewer = RandomFunctions</span>
+<span class="fc" id="L315">									.selectReviewerFromPool(pool);</span>
+<span class="fc" id="L316">							reviewer.increaseParticipation();</span>
+<span class="fc" id="L317">							reviewer.addReview(currentReview);</span>
+<span class="fc" id="L318">							currentReview.addReviewer(reviewer);</span>
+<span class="fc" id="L319">							possibleReviewers.remove(reviewer);</span>
+						}
+
+<span class="fc" id="L322">						currentReview.setScribe(currentReview.getAuthor());</span>
+
+<span class="fc" id="L324">						ArrayList&lt;Participant&gt; possibleModerators = pool</span>
+<span class="fc" id="L325">								.generatePoolForModerator(currentReview,</span>
+										moderatorNotReviewerGroup,
+<span class="fc" id="L327">										currentReview.getReviewers());</span>
+
+<span class="fc bfc" id="L329" title="All 2 branches covered.">						if (possibleModerators.size() &gt; 0) {</span>
+
+<span class="fc" id="L331">							Participant moderator = RandomFunctions</span>
+<span class="fc" id="L332">									.selectModeratorFromPool(pool);</span>
+<span class="fc" id="L333">							moderator.increaseParticipation();</span>
+<span class="fc" id="L334">							moderator.addReview(currentReview);</span>
+<span class="fc" id="L335">							currentReview.setModerator(moderator);</span>
+
+<span class="fc" id="L337">							return currentReview;</span>
+						} else {
+							// reset
+<span class="fc" id="L340">							currentRoom.setReview(null);</span>
+<span class="fc" id="L341">							resetReview(currentReview, false, false, true);</span>
+<span class="fc" id="L342">							currentReview.setScribe(null);</span>
+<span class="fc" id="L343">							return null;</span>
+						}
+
+					} else {
+						// Reset the connections
+<span class="fc" id="L348">						currentRoom.setReview(null);</span>
+<span class="fc" id="L349">						resetReview(currentReview, false, false, false);</span>
+<span class="fc" id="L350">						return null;</span>
+						// }
+					}
+
+					// //number of reviewers + moderator + scribe
+				} else {
+					// enough participants -&gt; randomly select participants
+					// and scribe
+<span class="fc bfc" id="L358" title="All 2 branches covered.">					if (possibleReviewers.size() &gt;= amountReviewers + 1) {</span>
+
+<span class="fc bfc" id="L360" title="All 2 branches covered.">						for (int i = 0; i &lt; amountReviewers; i++) {</span>
+<span class="fc" id="L361">							Participant reviewer = RandomFunctions</span>
+<span class="fc" id="L362">									.selectReviewerFromPool(pool);</span>
+<span class="fc" id="L363">							reviewer.increaseParticipation();</span>
+<span class="fc" id="L364">							reviewer.addReview(currentReview);</span>
+<span class="fc" id="L365">							currentReview.addReviewer(reviewer);</span>
+<span class="fc" id="L366">							possibleReviewers.remove(reviewer);</span>
+						}
+
+<span class="fc" id="L369">						Participant scribe = RandomFunctions</span>
+<span class="fc" id="L370">								.selectReviewerFromPool(pool);</span>
+<span class="fc" id="L371">						scribe.increaseParticipation();</span>
+<span class="fc" id="L372">						scribe.addReview(currentReview);</span>
+<span class="fc" id="L373">						currentReview.setScribe(scribe);</span>
+
+<span class="fc" id="L375">						ArrayList&lt;Participant&gt; possibleModerators = pool</span>
+<span class="fc" id="L376">								.generatePoolForModerator(currentReview,</span>
+										moderatorNotReviewerGroup,
+<span class="fc" id="L378">										currentReview.getReviewers());</span>
+
+<span class="fc bfc" id="L380" title="All 2 branches covered.">						if (possibleModerators.size() &gt; 0) {</span>
+
+<span class="fc" id="L382">							Participant moderator = RandomFunctions</span>
+<span class="fc" id="L383">									.selectModeratorFromPool(pool);</span>
+<span class="fc" id="L384">							moderator.increaseParticipation();</span>
+<span class="fc" id="L385">							moderator.addReview(currentReview);</span>
+<span class="fc" id="L386">							currentReview.setModerator(moderator);</span>
+
+<span class="fc" id="L388">							return currentReview;</span>
+						} else {
+<span class="fc" id="L390">							currentRoom.setReview(null);</span>
+<span class="fc" id="L391">							resetReview(currentReview, false, true, true);</span>
+<span class="fc" id="L392">							return null;</span>
+						}
+					} else {
+						// Reset the connections
+<span class="fc" id="L396">						currentRoom.setReview(null);</span>
+<span class="fc" id="L397">						resetReview(currentReview, false, false, false);</span>
+<span class="fc" id="L398">						return null;</span>
+						// }
+					}
+				}
+			}
+
+		}
+		// no result
+<span class="fc" id="L406">		return null;</span>
+	}
+
+	/**
+	 * Resets the connections of a review
+	 * 
+	 * @param review
+	 *            the review
+	 * @param moderatorReset
+	 *            true if moderator should be reseted
+	 * @param scribeReset
+	 *            true if the scribe should be reseted
+	 * @param reviewerReset
+	 *            tru if the reviewers should be reseted
+	 */
+	private void resetReview(Review review, boolean moderatorReset,
+			boolean scribeReset, boolean reviewerReset) {
+<span class="fc" id="L423">		review.setAssignedRoom(null);</span>
+<span class="pc bpc" id="L424" title="1 of 2 branches missed.">		if (moderatorReset) {</span>
+<span class="nc" id="L425">			review.getModerator().decreaseParticipation();</span>
+		}
+<span class="fc" id="L427">		review.setModerator(null);</span>
+
+<span class="fc bfc" id="L429" title="All 2 branches covered.">		if (scribeReset) {</span>
+<span class="fc" id="L430">			review.getScribe().decreaseParticipation();</span>
+		}
+<span class="fc" id="L432">		review.setScribe(null);</span>
+
+<span class="fc bfc" id="L434" title="All 2 branches covered.">		if (reviewerReset) {</span>
+<span class="fc bfc" id="L435" title="All 2 branches covered.">			for (Participant p : review.getReviewers()) {</span>
+<span class="fc" id="L436">				p.decreaseParticipation();</span>
+<span class="fc" id="L437">			}</span>
+		}
+<span class="fc" id="L439">		review.getReviewers().clear();</span>
+<span class="fc" id="L440">	}</span>
+
+	/**
+	 * This method finds all extra reviewers and matches them to the existing
+	 * reviews
+	 */
+	private boolean matchExtraReviewers() {
+
+		// check if there are missing participants left
+<span class="fc" id="L449">		List&lt;Participant&gt; participants = ParticipantTableModel.getInstance()</span>
+<span class="fc" id="L450">				.getParticipants();</span>
+
+<span class="fc" id="L452">		boolean notEnoughParticipations = false;</span>
+
+<span class="fc bfc" id="L454" title="All 2 branches covered.">		for (Participant p : participants) {</span>
+<span class="pc bpc" id="L455" title="1 of 2 branches missed.">			if (p.getNumberOfReviews() &lt; 2) {</span>
+<span class="nc" id="L456">				notEnoughParticipations = true;</span>
+<span class="pc bpc" id="L457" title="1 of 2 branches missed.">			} else if (p.getNumberOfReviews() &gt; 2) {</span>
+				// error!!
+<span class="nc" id="L459">				return false;</span>
+			}
+<span class="fc" id="L461">		}</span>
+
+<span class="pc bpc" id="L463" title="1 of 2 branches missed.">		if (notEnoughParticipations) {</span>
+<span class="nc" id="L464">			List&lt;Review&gt; reviews = ReviewPlan.getInstance().getReviews();</span>
+
+<span class="nc bnc" id="L466" title="All 2 branches missed.">			for (Review currentReview : reviews) {</span>
+<span class="nc" id="L467">				Pool pool = new Pool(currentReview.getAssignedRoom().getSlot());</span>
+<span class="nc" id="L468">				ArrayList&lt;Participant&gt; possibleReviewers = pool</span>
+<span class="nc" id="L469">						.generatePoolForReviewers(currentReview);</span>
+				// reviewers left
+<span class="nc bnc" id="L471" title="All 2 branches missed.">				if (possibleReviewers.size() &gt; 0) {</span>
+
+<span class="nc" id="L473">					Participant reviewer = RandomFunctions</span>
+<span class="nc" id="L474">							.selectReviewerFromPool(pool);</span>
+<span class="nc" id="L475">					currentReview.addReviewer(reviewer);</span>
+<span class="nc" id="L476">					reviewer.increaseParticipation();</span>
+<span class="nc" id="L477">					reviewer.addReview(currentReview);</span>
+
+					// no reviewers left -&gt; error
+				}
+
+<span class="nc" id="L482">			}</span>
+
+<span class="nc" id="L484">			return true;</span>
+		} else {
+			// all have been matched efore
+<span class="fc" id="L487">			return true;</span>
+		}
+
+	}
+
+	public boolean isFirstRound() {
+<span class="nc" id="L493">		return firstRound;</span>
+	}
+
+	public void setFirstRound(boolean firstRound) {
+<span class="fc" id="L497">		this.firstRound = firstRound;</span>
+<span class="fc" id="L498">	}</span>
+
+	public ArrayList&lt;Slot&gt; getSlots() {
+<span class="nc" id="L501">		return slots;</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.util.concurrent.Callable#call()
+	 */
+	@Override
+	public ArrayList&lt;Review&gt; call() throws Exception {
+<span class="nc" id="L511">		ArrayList&lt;Review&gt; reviews = MatchReview();</span>
+
+<span class="nc bnc" id="L513" title="All 2 branches missed.">		if (reviews != null) {</span>
+<span class="nc" id="L514">			setLetters(reviews);</span>
+		}
+
+<span class="nc" id="L517">		return reviews;</span>
+	}
+
+	/**
+	 * This method goes through the reviews and adds a character for every
+	 * review A..Z..AA...AZ...
+	 * 
+	 * @param reviews
+	 *            the list of reviews
+	 */
+	private static void setLetters(ArrayList&lt;Review&gt; reviews) {
+<span class="nc" id="L528">		char letter = 'A';</span>
+<span class="nc" id="L529">		char prefix = '0';</span>
+
+<span class="nc bnc" id="L531" title="All 2 branches missed.">		for (Review r : reviews) {</span>
+<span class="nc bnc" id="L532" title="All 2 branches missed.">			if (prefix == '0') {</span>
+<span class="nc" id="L533">				r.setLetter(String.valueOf(letter));</span>
+			} else {
+<span class="nc" id="L535">				r.setLetter(String.valueOf(prefix) + letter);</span>
+			}
+
+<span class="nc bnc" id="L538" title="All 2 branches missed.">			if (letter == 'Z') {</span>
+				// reset
+<span class="nc" id="L540">				letter = 'A';</span>
+				// fix prefix
+<span class="nc bnc" id="L542" title="All 2 branches missed.">				if (prefix == '0') {</span>
+<span class="nc" id="L543">					prefix = 'A';</span>
+
+				} else {
+<span class="nc" id="L546">					prefix++;</span>
+				}
+
+			} else {
+
+<span class="nc" id="L551">				letter++;</span>
+			}
+<span class="nc" id="L553">		}</span>
+
+<span class="nc" id="L555">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.16.202610240946</span></div></body></html>

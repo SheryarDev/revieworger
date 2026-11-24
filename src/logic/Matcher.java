@@ -145,7 +145,6 @@ public class Matcher implements Callable<ArrayList<Review>> {
 			// first element
 			if (i == 0) {
 				Review review = new Review(currentParticipant);
-				review.setAuthor(currentParticipant);
 				currentParticipant.addReview(review);
 				currentParticipant.increaseParticipation();
 				plan.addTemp(review);
@@ -156,8 +155,6 @@ public class Matcher implements Callable<ArrayList<Review>> {
 				if (!currentParticipant.getGroupNumber().equals(previousParticipant
 						.getGroupNumber())) {
 					Review review = new Review(currentParticipant);
-					review.setAuthor(currentParticipant);
-					review.setAuthor(currentParticipant);
 					currentParticipant.increaseParticipation();
 					currentParticipant.addReview(review);
 					plan.addTemp(review);
@@ -230,6 +227,11 @@ public class Matcher implements Callable<ArrayList<Review>> {
 				.hasMoreElements();) {
 			currentSlotNode = (SlotNode) enumSlots.nextElement();
 			Slot currentSlot = (Slot) currentSlotNode.getUserObject();
+
+			// the Slot objects live in the tree and survive between
+			// calculations: rebuild the room list instead of appending to it,
+			// otherwise every new Matcher duplicates all rooms
+			currentSlot.getRooms().clear();
 
 			// all rooms
 			for (Enumeration<TreeNode> enumRooms = currentSlotNode.children(); enumRooms
